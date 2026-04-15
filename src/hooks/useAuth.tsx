@@ -29,18 +29,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) fetchRole(session.user.id);
-      else setLoading(false);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      setSession(s);
+      setUser(s?.user ?? null);
+      if (s?.user) {
+        fetchRole(s.user.id);
+      } else {
+        setLoading(false);
+      }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) fetchRole(session.user.id);
-      else { setUserRole(null); setLoading(false); }
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+      setSession(s);
+      setUser(s?.user ?? null);
+      if (s?.user) {
+        fetchRole(s.user.id);
+      } else {
+        setUserRole(null);
+        setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -48,27 +57,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function fetchRole(userId: string) {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .select("role, is_super_admin")
         .eq("id", userId)
-        .single();
-      setUserRole(data?.role || "client");
-    } catch {
+        .maybeSingle();
+
+      if (error) {
+        console.warn("Profile fetch error:", error.message);
+        setUserRole("client");
+      } else {
+        setUserRole(data?.role || "client");
+      }
+    } catch (err) {
+      console.warn("Profile fetch failed:", err);
       setUserRole("client");
     } finally {
       setLoading(false);
     }
   }
 
-  const signIn = (email: string, password: string) =>
-    supabase.auth.signInWithPassword({ email, password });
+  const signIn = async (email: string, password: string) => {
+    const result = await supabase.auth.signInWithPassword({ email, password });
+    return result;
+  };
 
-  const signUp = (email: string, password: string) =>
-    supabase.auth.signUp({ email, password });
+  const signUp = async (email: string, password: string) => {
+    return supabase.auth.signUp({ email, password });
+  };
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
+    setUserRole(null);
   };
 
   return (
