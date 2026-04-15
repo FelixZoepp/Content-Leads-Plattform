@@ -4,8 +4,8 @@ import {
   LayoutDashboard, CalendarDays, Radio, Linkedin, Instagram, Mail,
   Users, FileText, PenTool, BarChart3, DollarSign, Bot, Phone,
   GraduationCap, MessageCircle, Video, Gamepad2, Settings, HelpCircle,
-  TrendingUp, Shield, Target, LineChart, ClipboardList, Briefcase,
-  Kanban, UserSearch, Send, GitBranch
+  TrendingUp, Shield, Target, LineChart, Kanban, UserSearch, Send,
+  GitBranch, Globe, Upload, Activity, PhoneCall, BookOpen, Zap
 } from "lucide-react";
 
 export function Sidebar() {
@@ -25,7 +25,6 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
         {/* MAIN */}
         <SidebarItem icon={<LayoutDashboard className="w-5 h-5" />} label="Dashboard" path="/dashboard" />
@@ -39,24 +38,31 @@ export function Sidebar() {
           icon={<Radio className="w-5 h-5" />}
           label="Outreach"
           children={[
-            { icon: <BarChart3 className="w-4 h-4" />, label: "Tracking", path: "/dashboard/outreach/tracking" },
-            { icon: <Linkedin className="w-4 h-4" />, label: "LinkedIn", path: "/dashboard/outreach/linkedin" },
-            { icon: <Instagram className="w-4 h-4" />, label: "Instagram", path: "/dashboard/outreach/instagram", locked: true },
-            { icon: <Mail className="w-4 h-4" />, label: "E-Mail", path: "/dashboard/outreach/email" },
+            { icon: <LayoutDashboard className="w-4 h-4" />, label: "Dashboard", path: "/dashboard/outreach/dashboard" },
+            { icon: <Users className="w-4 h-4" />, label: "Kontakte", path: "/dashboard/outreach/contacts" },
+            { icon: <Kanban className="w-4 h-4" />, label: "Pipeline", path: "/dashboard/outreach/pipeline" },
             { icon: <Send className="w-4 h-4" />, label: "Kampagnen", path: "/dashboard/outreach/campaigns" },
             { icon: <GitBranch className="w-4 h-4" />, label: "Sequenzen", path: "/dashboard/outreach/sequences" },
-            { icon: <Phone className="w-4 h-4" />, label: "Power Dialer", path: "/dashboard/outreach/dialer" },
+            { icon: <PhoneCall className="w-4 h-4" />, label: "Power Dialer", path: "/dashboard/outreach/dialer" },
             { icon: <UserSearch className="w-4 h-4" />, label: "Lead-Recherche", path: "/dashboard/outreach/leads" },
+            { icon: <Mail className="w-4 h-4" />, label: "E-Mail Kampagnen", path: "/dashboard/outreach/email" },
+            { icon: <Globe className="w-4 h-4" />, label: "Landing Pages", path: "/dashboard/outreach/landing-pages" },
+            { icon: <Gamepad2 className="w-4 h-4" />, label: "Team Arena", path: "/dashboard/outreach/team" },
+            { icon: <BarChart3 className="w-4 h-4" />, label: "KPIs", path: "/dashboard/outreach/kpi" },
+            { icon: <Upload className="w-4 h-4" />, label: "Import", path: "/dashboard/outreach/import" },
           ]}
         />
 
-        {/* CRM */}
+        {/* SALES TOOLS */}
         <SidebarItem
-          icon={<Users className="w-5 h-5" />}
-          label="CRM"
+          icon={<Zap className="w-5 h-5" />}
+          label="Sales Tools"
           children={[
-            { icon: <Kanban className="w-4 h-4" />, label: "Pipeline", path: "/dashboard/crm/pipeline" },
-            { icon: <Users className="w-4 h-4" />, label: "Kontakte", path: "/dashboard/crm/contacts" },
+            { icon: <BookOpen className="w-4 h-4" />, label: "Call Scripts", path: "/dashboard/outreach/scripts" },
+            { icon: <PhoneCall className="w-4 h-4" />, label: "Einwandbehandlung", path: "/dashboard/outreach/objections" },
+            { icon: <TrendingUp className="w-4 h-4" />, label: "Deal Analytics", path: "/dashboard/outreach/analytics" },
+            { icon: <Activity className="w-4 h-4" />, label: "Activity Log", path: "/dashboard/outreach/activity" },
+            { icon: <Video className="w-4 h-4" />, label: "Video Notes", path: "/dashboard/outreach/video" },
           ]}
         />
 
@@ -92,8 +98,6 @@ export function Sidebar() {
           <span className="text-[10px] font-semibold uppercase tracking-wider text-[#64748B]">Tools</span>
         </div>
         <SidebarItem icon={<Bot className="w-5 h-5" />} label="KI Assistant" path="/dashboard/assistant" locked />
-        <SidebarItem icon={<Phone className="w-5 h-5" />} label="Sales Tools" path="/dashboard/sales-reviewer" locked />
-        <SidebarItem icon={<Gamepad2 className="w-5 h-5" />} label="Gamification" path="/dashboard/games" locked />
       </nav>
 
       {/* Footer */}

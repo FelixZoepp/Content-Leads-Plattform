@@ -47,6 +47,19 @@ const OutreachActivityLog = lazy(() => import("./pages/outreach/ActivityLog"));
 const OutreachVideoNote = lazy(() => import("./pages/outreach/VideoNote"));
 const OutreachIntegrations = lazy(() => import("./pages/outreach/Integrations"));
 
+// Additional outreach pages
+const OutreachDashboard = lazy(() => import("./pages/outreach/SalesflowDashboard"));
+const OutreachToday = lazy(() => import("./pages/outreach/OutreachToday"));
+const OutreachApiKeys = lazy(() => import("./pages/outreach/ApiKeys"));
+const OutreachBilling = lazy(() => import("./pages/outreach/Billing"));
+const OutreachMasterAdmin = lazy(() => import("./pages/outreach/MasterAdmin"));
+const OutreachPartner = lazy(() => import("./pages/outreach/Partner"));
+const OutreachPartnerDashboard = lazy(() => import("./pages/outreach/PartnerDashboard"));
+const OutreachVideoNoteAdmin = lazy(() => import("./pages/outreach/VideoNoteAdmin"));
+const OutreachProfile = lazy(() => import("./pages/outreach/OutreachProfile"));
+const OutreachLeadPagePreview = lazy(() => import("./pages/outreach/LeadPagePreview"));
+const OutreachUpgrade = lazy(() => import("./pages/outreach/Upgrade"));
+
 // Locked placeholder
 const LockedPlaceholder = lazy(() => import("./pages/outreach/Instagram"));
 
@@ -112,6 +125,17 @@ function DashboardRoutes() {
           <Route path="outreach/activity" element={<OutreachActivityLog />} />
           <Route path="outreach/video" element={<OutreachVideoNote />} />
           <Route path="outreach/integrations" element={<OutreachIntegrations />} />
+          <Route path="outreach/dashboard" element={<OutreachDashboard />} />
+          <Route path="outreach/today" element={<OutreachToday />} />
+          <Route path="outreach/api" element={<OutreachApiKeys />} />
+          <Route path="outreach/billing" element={<OutreachBilling />} />
+          <Route path="outreach/profile" element={<OutreachProfile />} />
+          <Route path="outreach/partner" element={<OutreachPartner />} />
+          <Route path="outreach/partner-dashboard" element={<OutreachPartnerDashboard />} />
+          <Route path="outreach/video-admin" element={<OutreachVideoNoteAdmin />} />
+          <Route path="outreach/upgrade" element={<OutreachUpgrade />} />
+          <Route path="outreach/lead-page/:slug" element={<OutreachLeadPagePreview />} />
+          <Route path="outreach/master-admin" element={<OutreachMasterAdmin />} />
 
           {/* CRM (uses Salesflow) */}
           <Route path="crm" element={<OutreachPipeline />} />
