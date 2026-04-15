@@ -19,6 +19,7 @@ const ContentAnalytics = lazy(() => import("./pages/content/Analytics"));
 const Finance = lazy(() => import("./pages/finance/Finance"));
 const Training = lazy(() => import("./pages/training/Training"));
 const Community = lazy(() => import("./pages/community/Community"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 
 const Loader = () => (
   <div className="flex min-h-screen items-center justify-center bg-[#0A0A0F]">
@@ -61,6 +62,7 @@ function DashboardRoutes() {
           <Route path="community" element={<Community />} />
           <Route path="live" element={<Instagram />} />
           <Route path="games" element={<Instagram />} />
+          <Route path="admin" element={<AdminDashboard />} />
           <Route path="settings" element={<Settings />} />
           <Route path="support" element={<Support />} />
         </Routes>

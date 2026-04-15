@@ -1,12 +1,14 @@
 import { SidebarItem } from "./SidebarItem";
+import { useAuth } from "@/hooks/useAuth";
 import {
   LayoutDashboard, CalendarDays, Radio, Linkedin, Instagram, Mail,
   Users, FileText, PenTool, BarChart3, DollarSign, Bot, Phone,
   GraduationCap, MessageCircle, Video, Gamepad2, Settings, HelpCircle,
-  TrendingUp
+  TrendingUp, Shield
 } from "lucide-react";
 
 export function Sidebar() {
+  const { userRole } = useAuth();
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-[220px] bg-[#0A0A0F] border-r border-[#2A2A35] flex flex-col z-50">
       {/* Logo */}
@@ -64,6 +66,9 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="px-3 py-3 border-t border-[#2A2A35] space-y-1">
+        {userRole === "admin" && (
+          <SidebarItem icon={<Shield className="w-5 h-5" />} label="Admin" path="/dashboard/admin" />
+        )}
         <SidebarItem icon={<Settings className="w-5 h-5" />} label="Einstellungen" path="/dashboard/settings" />
         <SidebarItem icon={<HelpCircle className="w-5 h-5" />} label="Support" path="/dashboard/support" />
       </div>

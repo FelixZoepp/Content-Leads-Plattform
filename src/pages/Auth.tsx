@@ -15,9 +15,19 @@ export default function Auth() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const { error } = await signIn(email, password);
-    if (error) { setError(error.message); setLoading(false); }
-    else navigate("/dashboard");
+    try {
+      const result = await signIn(email, password);
+      if (result.error) {
+        setError(result.error.message);
+        setLoading(false);
+      } else {
+        // Small delay to let auth state propagate
+        setTimeout(() => navigate("/dashboard"), 100);
+      }
+    } catch (err: any) {
+      setError(err.message || "Login fehlgeschlagen");
+      setLoading(false);
+    }
   };
 
   return (
