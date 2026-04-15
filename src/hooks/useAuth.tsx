@@ -29,50 +29,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s);
-      setUser(s?.user ?? null);
-      if (s?.user) {
-        fetchRole(s.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
+    let mounted = true;
 
-    // Listen for auth changes
+    // IMPORTANT: Set up auth listener FIRST, then get session
+    // This prevents race conditions per Supabase docs
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+      if (!mounted) return;
+      console.log("[Auth] onAuthStateChange:", _event, s?.user?.email);
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
-        fetchRole(s.user.id);
+        // Use setTimeout to avoid deadlock with Supabase auth
+        setTimeout(() => { if (mounted) fetchRole(s.user.id); }, 0);
       } else {
         setUserRole(null);
         setLoading(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      if (!mounted) return;
+      console.log("[Auth] getSession:", s?.user?.email || "no session");
+      setSession(s);
+      setUser(s?.user ?? null);
+      if (s?.user) {
+        fetchRole(s.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   async function fetchRole(userId: string) {
+    console.log("[Auth] fetchRole for:", userId);
     try {
       const { data, error } = await supabase
-        .from("profiles")
+        .from("profiles" as any)
         .select("role, is_super_admin")
         .eq("id", userId)
         .maybeSingle();
 
+      console.log("[Auth] fetchRole result:", { data, error: error?.message });
       if (error) {
-        console.warn("Profile fetch error:", error.message);
         setUserRole("client");
       } else {
         setUserRole(data?.role || "client");
       }
     } catch (err) {
-      console.warn("Profile fetch failed:", err);
+      console.warn("[Auth] fetchRole failed:", err);
       setUserRole("client");
     } finally {
+      console.log("[Auth] setLoading(false)");
       setLoading(false);
     }
   }
