@@ -1,4 +1,4 @@
-import { FeaturePageTemplate } from "@/components/landing/FeaturePageTemplate";
+import { FeaturePageTemplate } from "@/components/outreach/landing/FeaturePageTemplate";
 import { Phone, Users, Zap, FileText, Clock, Target, TrendingUp, Headphones, Play, PhoneCall, PhoneOff, Mic } from "lucide-react";
 
 const PowerDialer = () => {

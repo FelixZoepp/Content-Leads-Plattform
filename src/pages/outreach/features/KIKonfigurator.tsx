@@ -1,4 +1,4 @@
-import { FeaturePageTemplate } from "@/components/landing/FeaturePageTemplate";
+import { FeaturePageTemplate } from "@/components/outreach/landing/FeaturePageTemplate";
 import { Sparkles, Zap, Palette, FileText, Target, TrendingUp, Clock, CheckCircle, Wand2 } from "lucide-react";
 
 const KIKonfigurator = () => {

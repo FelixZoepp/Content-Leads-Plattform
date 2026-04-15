@@ -1,4 +1,4 @@
-import { FeaturePageTemplate } from "@/components/landing/FeaturePageTemplate";
+import { FeaturePageTemplate } from "@/components/outreach/landing/FeaturePageTemplate";
 import { Video, Sparkles, Users, Clock, Zap, Target, TrendingUp, CheckCircle, Play, User, ArrowRight, Link2, UserCheck } from "lucide-react";
 
 const KIVideos = () => {

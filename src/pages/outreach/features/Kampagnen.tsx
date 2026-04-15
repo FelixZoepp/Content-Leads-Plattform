@@ -1,4 +1,4 @@
-import { FeaturePageTemplate } from "@/components/landing/FeaturePageTemplate";
+import { FeaturePageTemplate } from "@/components/outreach/landing/FeaturePageTemplate";
 import { 
   BarChart3, 
   TrendingUp, 

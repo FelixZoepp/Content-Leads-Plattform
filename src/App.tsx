@@ -2,6 +2,13 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { DashboardDataProvider } from "@/hooks/useDashboardData";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+
+// Wrapper for consulting pages that need DashboardDataProvider
+function WithDashboardData({ children }: { children: React.ReactNode }) {
+  return <DashboardDataProvider>{children}</DashboardDataProvider>;
+}
 
 // Consulting pages
 const CashflowDashboard = lazy(() => import("./pages/consulting/CashflowDashboard"));
@@ -85,24 +92,25 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function DashboardRoutes() {
   return (
     <DashboardLayout>
+      <ErrorBoundary>
       <Suspense fallback={<SubLoader />}>
         <Routes>
           {/* Main */}
           <Route index element={<Dashboard />} />
           <Route path="calendar" element={<Calendar />} />
 
-          {/* Consulting / Business */}
-          <Route path="today" element={<TodayPage />} />
-          <Route path="kpis" element={<KPITrackingPage />} />
-          <Route path="overview" element={<OverviewPage />} />
-          <Route path="marketing" element={<MarketingPage />} />
-          <Route path="sales" element={<SalesPage />} />
-          <Route path="finance" element={<FinancePage />} />
-          <Route path="ai" element={<AIPage />} />
-          <Route path="reports" element={<ReportsPage />} />
-          <Route path="csat" element={<CSATPage />} />
-          <Route path="assets/:assetType" element={<AssetPage />} />
-          <Route path="content/calendar" element={<ContentCalendarPage />} />
+          {/* Consulting / Business - wrapped in DashboardDataProvider */}
+          <Route path="today" element={<WithDashboardData><TodayPage /></WithDashboardData>} />
+          <Route path="kpis" element={<WithDashboardData><KPITrackingPage /></WithDashboardData>} />
+          <Route path="overview" element={<WithDashboardData><OverviewPage /></WithDashboardData>} />
+          <Route path="marketing" element={<WithDashboardData><MarketingPage /></WithDashboardData>} />
+          <Route path="sales" element={<WithDashboardData><SalesPage /></WithDashboardData>} />
+          <Route path="finance" element={<WithDashboardData><FinancePage /></WithDashboardData>} />
+          <Route path="ai" element={<WithDashboardData><AIPage /></WithDashboardData>} />
+          <Route path="reports" element={<WithDashboardData><ReportsPage /></WithDashboardData>} />
+          <Route path="csat" element={<WithDashboardData><CSATPage /></WithDashboardData>} />
+          <Route path="assets/:assetType" element={<WithDashboardData><AssetPage /></WithDashboardData>} />
+          <Route path="content/calendar" element={<WithDashboardData><ContentCalendarPage /></WithDashboardData>} />
 
           {/* Outreach */}
           <Route path="outreach/tracking" element={<OutreachKPI />} />
@@ -163,6 +171,7 @@ function DashboardRoutes() {
           <Route path="support" element={<Support />} />
         </Routes>
       </Suspense>
+      </ErrorBoundary>
     </DashboardLayout>
   );
 }

@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, ExternalLink } from "lucide-react";
-import type { Section } from "@/pages/client/TodayPage";
+import type { Section } from "@/pages/consulting/TodayPage";
 
 interface Props {
   sections: Section[];

@@ -1,4 +1,4 @@
-import { FeaturePageTemplate } from "@/components/landing/FeaturePageTemplate";
+import { FeaturePageTemplate } from "@/components/outreach/landing/FeaturePageTemplate";
 import { Users, LayoutDashboard, Filter, Tag, Search, Clock, Target, TrendingUp, Zap, Mail, Phone, Eye, Star, Calendar, UserCheck, ArrowRight, CheckCircle, MessageSquare } from "lucide-react";
 
 const CRM = () => {
