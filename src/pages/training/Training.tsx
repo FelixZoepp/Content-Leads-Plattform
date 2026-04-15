@@ -12,9 +12,9 @@ const modules = [
 ];
 
 function StatusIcon({ status }: { status: string }) {
-  if (status === "completed") return <CheckCircle2 className="w-5 h-5 text-[#27AE60]" />;
-  if (status === "in_progress") return <PlayCircle className="w-5 h-5 text-[#4A9FD9]" />;
-  return <Circle className="w-5 h-5 text-[#555566]" />;
+  if (status === "completed") return <CheckCircle2 className="w-5 h-5 text-[#10B981]" />;
+  if (status === "in_progress") return <PlayCircle className="w-5 h-5 text-[#2E86AB]" />;
+  return <Circle className="w-5 h-5 text-[#64748B]" />;
 }
 
 export default function Training() {
@@ -25,21 +25,21 @@ export default function Training() {
     <div className="space-y-6 max-w-4xl">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Training / Dein Sprint</h1>
-        <span className="text-sm text-[#8888AA]">{pct}% abgeschlossen</span>
+        <span className="text-sm text-[#94A3B8]">{pct}% abgeschlossen</span>
       </div>
-      <div className="w-full h-2 bg-[#2A2A35] rounded-full">
-        <div className="h-full bg-[#4A9FD9] rounded-full transition-all" style={{ width: `${pct}%` }} />
+      <div className="w-full h-2 bg-[#1E293B] rounded-full">
+        <div className="h-full bg-[#2E86AB] rounded-full transition-all" style={{ width: `${pct}%` }} />
       </div>
       <div className="space-y-3">
         {modules.map(m => (
-          <div key={m.num} className="bg-[#12121A] border border-[#2A2A35] rounded-2xl p-5 hover:border-[#4A9FD9]/30 transition cursor-pointer">
+          <div key={m.num} className="bg-[#111827] border border-[#1E293B] rounded-2xl p-5 hover:border-[#2E86AB]/30 transition cursor-pointer">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-[#0A0A0F] border border-[#2A2A35] flex items-center justify-center text-sm font-semibold text-[#8888AA]">
+              <div className="w-10 h-10 rounded-full bg-[#0B0E14] border border-[#1E293B] flex items-center justify-center text-sm font-semibold text-[#94A3B8]">
                 {m.num}
               </div>
               <div className="flex-1">
                 <h3 className="text-sm font-medium text-white">{m.title}</h3>
-                <p className="text-xs text-[#8888AA] mt-0.5">{m.desc}</p>
+                <p className="text-xs text-[#94A3B8] mt-0.5">{m.desc}</p>
               </div>
               <StatusIcon status={m.status} />
             </div>

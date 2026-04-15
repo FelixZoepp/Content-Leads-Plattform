@@ -12,60 +12,60 @@ export default function LinkedIn() {
   const [message, setMessage] = useState("");
 
   return (
-    <div className="flex h-[calc(100vh-5rem)] -m-6 border-t border-[#2A2A35]">
+    <div className="flex h-[calc(100vh-5rem)] -m-6 border-t border-[#1E293B]">
       {/* Left: Conversations */}
-      <div className="w-80 border-r border-[#2A2A35] flex flex-col bg-[#0A0A0F]">
-        <div className="p-3 border-b border-[#2A2A35]">
+      <div className="w-80 border-r border-[#1E293B] flex flex-col bg-[#0B0E14]">
+        <div className="p-3 border-b border-[#1E293B]">
           <div className="flex gap-2 mb-3">
-            <span className="px-2.5 py-1 bg-[#4A9FD9]/15 text-[#4A9FD9] text-xs font-medium rounded-full">LinkedIn Einladungen <span className="ml-1 font-bold">0</span></span>
-            <span className="px-2.5 py-1 bg-[#12121A] text-[#8888AA] text-xs rounded-full">Kontakte</span>
+            <span className="px-2.5 py-1 bg-[#2E86AB]/15 text-[#2E86AB] text-xs font-medium rounded-full">LinkedIn Einladungen <span className="ml-1 font-bold">0</span></span>
+            <span className="px-2.5 py-1 bg-[#111827] text-[#94A3B8] text-xs rounded-full">Kontakte</span>
           </div>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#555566]" />
-            <input placeholder="Konversationen durchsuchen" className="w-full bg-[#12121A] border border-[#2A2A35] rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder:text-[#555566] focus:outline-none focus:border-[#4A9FD9]/50" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#64748B]" />
+            <input placeholder="Konversationen durchsuchen" className="w-full bg-[#111827] border border-[#1E293B] rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder:text-[#64748B] focus:outline-none focus:border-[#2E86AB]/50" />
           </div>
         </div>
-        <div className="flex gap-2 px-3 py-2 border-b border-[#2A2A35]">
+        <div className="flex gap-2 px-3 py-2 border-b border-[#1E293B]">
           {["Ordner", "Posteingang", "Filter"].map(f => (
-            <button key={f} className="px-2 py-1 text-[10px] text-[#8888AA] bg-[#12121A] rounded hover:bg-[#1A1A25] transition">{f}</button>
+            <button key={f} className="px-2 py-1 text-[10px] text-[#94A3B8] bg-[#111827] rounded hover:bg-[#1A2235] transition">{f}</button>
           ))}
         </div>
         <div className="flex-1 overflow-y-auto">
-          <div className="p-8 text-center text-sm text-[#555566]">
+          <div className="p-8 text-center text-sm text-[#64748B]">
             Keine Konversationen vorhanden
           </div>
         </div>
       </div>
 
       {/* Middle: Chat */}
-      <div className="flex-1 flex flex-col bg-[#0A0A0F]">
+      <div className="flex-1 flex flex-col bg-[#0B0E14]">
         {selected === null ? (
-          <div className="flex-1 flex items-center justify-center text-[#555566]">
+          <div className="flex-1 flex items-center justify-center text-[#64748B]">
             <p className="text-sm">Wähle eine Konversation aus</p>
           </div>
         ) : (
           <>
-            <div className="p-4 border-b border-[#2A2A35] flex items-center justify-between">
+            <div className="p-4 border-b border-[#1E293B] flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-[#4A9FD9]/20 flex items-center justify-center text-xs text-[#4A9FD9] font-semibold">MM</div>
+                <div className="w-9 h-9 rounded-full bg-[#2E86AB]/20 flex items-center justify-center text-xs text-[#2E86AB] font-semibold">MM</div>
                 <div>
                   <p className="text-sm font-medium text-white">Max Mustermann</p>
-                  <p className="text-xs text-[#8888AA]">CEO bei Firma GmbH</p>
+                  <p className="text-xs text-[#94A3B8]">CEO bei Firma GmbH</p>
                 </div>
               </div>
             </div>
             <div className="flex-1" />
-            <div className="p-3 border-t border-[#2A2A35]">
+            <div className="p-3 border-t border-[#1E293B]">
               <div className="flex gap-2 mb-2">
                 {["F1", "F2", "M1", "M2"].map(t => (
-                  <button key={t} className="px-2 py-1 text-[10px] bg-[#12121A] border border-[#2A2A35] rounded text-[#8888AA] hover:border-[#4A9FD9]/30 transition">{t}</button>
+                  <button key={t} className="px-2 py-1 text-[10px] bg-[#111827] border border-[#1E293B] rounded text-[#94A3B8] hover:border-[#2E86AB]/30 transition">{t}</button>
                 ))}
               </div>
               <div className="flex items-end gap-2">
-                <input value={message} onChange={e => setMessage(e.target.value)} placeholder="Nachricht schreiben..." className="flex-1 bg-[#12121A] border border-[#2A2A35] rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-[#555566] focus:outline-none focus:border-[#4A9FD9]/50" />
-                <button className="p-2.5 text-[#8888AA] hover:text-white transition"><Smile className="w-4 h-4" /></button>
-                <button className="p-2.5 text-[#8888AA] hover:text-white transition"><Paperclip className="w-4 h-4" /></button>
-                <button className="p-2.5 bg-[#4A9FD9] hover:bg-[#2E7BB5] text-white rounded-lg transition"><Send className="w-4 h-4" /></button>
+                <input value={message} onChange={e => setMessage(e.target.value)} placeholder="Nachricht schreiben..." className="flex-1 bg-[#111827] border border-[#1E293B] rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-[#64748B] focus:outline-none focus:border-[#2E86AB]/50" />
+                <button className="p-2.5 text-[#94A3B8] hover:text-white transition"><Smile className="w-4 h-4" /></button>
+                <button className="p-2.5 text-[#94A3B8] hover:text-white transition"><Paperclip className="w-4 h-4" /></button>
+                <button className="p-2.5 bg-[#2E86AB] hover:bg-[#246E8F] text-white rounded-lg transition"><Send className="w-4 h-4" /></button>
               </div>
             </div>
           </>
@@ -73,26 +73,26 @@ export default function LinkedIn() {
       </div>
 
       {/* Right: Contacts */}
-      <div className="w-72 border-l border-[#2A2A35] flex flex-col bg-[#0A0A0F]">
-        <div className="p-3 border-b border-[#2A2A35]">
-          <label className="flex items-center gap-2 text-xs text-[#8888AA]">
-            <input type="checkbox" className="rounded border-[#2A2A35] bg-[#12121A]" />
+      <div className="w-72 border-l border-[#1E293B] flex flex-col bg-[#0B0E14]">
+        <div className="p-3 border-b border-[#1E293B]">
+          <label className="flex items-center gap-2 text-xs text-[#94A3B8]">
+            <input type="checkbox" className="rounded border-[#1E293B] bg-[#111827]" />
             Nur nicht kontaktierte
           </label>
         </div>
         <div className="flex-1 overflow-y-auto">
           {mockContacts.map(c => (
-            <div key={c.id} className="p-3 border-b border-[#2A2A35]/50 hover:bg-[#1A1A25] transition cursor-pointer">
+            <div key={c.id} className="p-3 border-b border-[#1E293B]/50 hover:bg-[#1A2235] transition cursor-pointer">
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-[#4A9FD9]/20 flex items-center justify-center text-[10px] text-[#4A9FD9] font-semibold flex-shrink-0">{c.avatar}</div>
+                <div className="w-8 h-8 rounded-full bg-[#2E86AB]/20 flex items-center justify-center text-[10px] text-[#2E86AB] font-semibold flex-shrink-0">{c.avatar}</div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-white truncate">{c.name}</p>
-                  <p className="text-xs text-[#8888AA] truncate">{c.title}</p>
-                  <p className="text-[10px] text-[#555566] mt-0.5">Verbunden vor {c.connected}</p>
+                  <p className="text-xs text-[#94A3B8] truncate">{c.title}</p>
+                  <p className="text-[10px] text-[#64748B] mt-0.5">Verbunden vor {c.connected}</p>
                 </div>
                 <div className="flex gap-1">
-                  <button className="p-1 text-[#555566] hover:text-[#4A9FD9] transition"><Video className="w-3.5 h-3.5" /></button>
-                  <button className="p-1 text-[#555566] hover:text-[#4A9FD9] transition"><Phone className="w-3.5 h-3.5" /></button>
+                  <button className="p-1 text-[#64748B] hover:text-[#2E86AB] transition"><Video className="w-3.5 h-3.5" /></button>
+                  <button className="p-1 text-[#64748B] hover:text-[#2E86AB] transition"><Phone className="w-3.5 h-3.5" /></button>
                 </div>
               </div>
             </div>

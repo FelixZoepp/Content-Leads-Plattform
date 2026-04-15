@@ -14,6 +14,16 @@ export default {
     },
     extend: {
       colors: {
+        cl: {
+          primary: '#2E86AB',
+          'primary-light': '#4DA8CC',
+          'primary-hover': '#246E8F',
+          accent: '#D4783C',
+          bg: '#0B0E14',
+          surface: '#111827',
+          'surface-hover': '#1A2235',
+          border: '#1E293B',
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
