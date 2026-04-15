@@ -26,6 +26,9 @@ const AssetPage = lazy(() => import("./pages/consulting/AssetPage"));
 
 // Platform pages
 const Auth = lazy(() => import("./pages/Auth"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
+const GeneratingAssets = lazy(() => import("./pages/GeneratingAssets"));
+const AIAssistant = lazy(() => import("./pages/AIAssistant"));
 const Calendar = lazy(() => import("./pages/Calendar"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Support = lazy(() => import("./pages/Support"));
@@ -156,7 +159,7 @@ function DashboardRoutes() {
           <Route path="content/analytics" element={<LockedPlaceholder />} />
 
           {/* Tools */}
-          <Route path="assistant" element={<LockedPlaceholder />} />
+          <Route path="assistant" element={<AIAssistant />} />
           <Route path="sales-reviewer" element={<OutreachCallScript />} />
           <Route path="live" element={<LockedPlaceholder />} />
           <Route path="games" element={<OutreachTeamArena />} />
@@ -183,6 +186,8 @@ export default function App() {
         <Suspense fallback={<Loader />}>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+            <Route path="/generating" element={<ProtectedRoute><GeneratingAssets /></ProtectedRoute>} />
             <Route
               path="/dashboard/*"
               element={

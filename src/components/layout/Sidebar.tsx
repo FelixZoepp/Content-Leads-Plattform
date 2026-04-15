@@ -97,7 +97,7 @@ export function Sidebar() {
         <div className="pt-3 pb-1 px-3">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-[#64748B]">Tools</span>
         </div>
-        <SidebarItem icon={<Bot className="w-5 h-5" />} label="KI Assistant" path="/dashboard/assistant" locked />
+        <SidebarItem icon={<Bot className="w-5 h-5" />} label="Content-Leads AI" path="/dashboard/assistant" />
       </nav>
 
       {/* Footer */}
