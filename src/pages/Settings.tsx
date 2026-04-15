@@ -8,7 +8,7 @@ export default function SettingsPage() {
       <h1 className="text-2xl font-semibold">Allgemeine Einstellungen</h1>
       <div className="bg-[#111827] border border-[#1E293B] rounded-2xl divide-y divide-[#1E293B]">
         <div className="p-5 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-[#2E86AB]/20 flex items-center justify-center text-[#2E86AB] text-sm font-semibold">
+          <div className="w-10 h-10 rounded-full bg-[#0A66C2]/20 flex items-center justify-center text-[#0A66C2] text-sm font-semibold">
             {user?.user_metadata?.name?.split(" ").map((n: string) => n[0]).join("") || "CL"}
           </div>
           <div>

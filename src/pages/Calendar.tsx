@@ -8,7 +8,7 @@ export default function Calendar() {
     <div className="space-y-6 max-w-6xl">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Kalender</h1>
-        <button className="flex items-center gap-2 bg-[#2E86AB] hover:bg-[#246E8F] text-white font-medium px-4 py-2 rounded-lg transition text-sm">
+        <button className="flex items-center gap-2 bg-[#0A66C2] hover:bg-[#084D94] text-white font-medium px-4 py-2 rounded-lg transition text-sm">
           <Plus className="w-4 h-4" /> Neuer Termin
         </button>
       </div>
@@ -28,7 +28,7 @@ export default function Calendar() {
             const inMonth = day > 0 && day <= new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
             return (
               <div key={i} className={`aspect-square flex items-center justify-center rounded-lg text-sm cursor-pointer transition ${
-                isToday ? "bg-[#2E86AB] text-white font-semibold" :
+                isToday ? "bg-[#0A66C2] text-white font-semibold" :
                 inMonth ? "text-[#94A3B8] hover:bg-[#1A2235]" : "text-[#1E293B]"
               }`}>
                 {inMonth ? day : ""}

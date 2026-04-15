@@ -64,14 +64,14 @@ const OutreachUpgrade = lazy(() => import("./pages/outreach/Upgrade"));
 const LockedPlaceholder = lazy(() => import("./pages/outreach/Instagram"));
 
 const Loader = () => (
-  <div className="flex min-h-screen items-center justify-center bg-[#0B0E14]">
-    <div className="w-8 h-8 border-4 border-[#2E86AB] border-t-transparent rounded-full animate-spin" />
+  <div className="flex min-h-screen items-center justify-center bg-[#0A0A14]">
+    <div className="w-8 h-8 border-4 border-[#0A66C2] border-t-transparent rounded-full animate-spin" />
   </div>
 );
 
 const SubLoader = () => (
   <div className="flex justify-center py-20">
-    <div className="w-6 h-6 border-4 border-[#2E86AB] border-t-transparent rounded-full animate-spin" />
+    <div className="w-6 h-6 border-4 border-[#0A66C2] border-t-transparent rounded-full animate-spin" />
   </div>
 );
 

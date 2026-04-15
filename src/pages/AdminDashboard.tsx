@@ -121,7 +121,7 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-[#2E86AB] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-[#0A66C2] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -138,14 +138,14 @@ export default function AdminDashboard() {
           <button
             onClick={recalculateHealth}
             disabled={calculating}
-            className="flex items-center gap-2 px-4 py-2 bg-[#111827] border border-[#1E293B] rounded-lg text-sm text-[#94A3B8] hover:border-[#2E86AB]/30 transition disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-[#111827] border border-[#1E293B] rounded-lg text-sm text-[#94A3B8] hover:border-[#0A66C2]/30 transition disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${calculating ? "animate-spin" : ""}`} />
             Health Scores berechnen
           </button>
           <button
             onClick={() => setShowInvite(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#2E86AB] hover:bg-[#246E8F] text-white rounded-lg text-sm font-medium transition"
+            className="flex items-center gap-2 px-4 py-2 bg-[#0A66C2] hover:bg-[#084D94] text-white rounded-lg text-sm font-medium transition"
           >
             <UserPlus className="w-4 h-4" />
             Kunde einladen
@@ -155,7 +155,7 @@ export default function AdminDashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4">
-        <StatCard icon={Users} label="Aktive Kunden" value={tenants.length} color="#2E86AB" />
+        <StatCard icon={Users} label="Aktive Kunden" value={tenants.length} color="#0A66C2" />
         <StatCard icon={TrendingUp} label="Gesund" value={healthGreen} sub={`${tenants.length > 0 ? Math.round((healthGreen / tenants.length) * 100) : 0}% des Portfolios`} color="#10B981" />
         <StatCard icon={Activity} label="Achtung" value={healthAmber} color="#F59E0B" />
         <StatCard icon={AlertTriangle} label="Kritisch" value={healthRed} sub={alerts.length > 0 ? `${alerts.length} offene Alerts` : undefined} color="#EF4444" />
@@ -217,7 +217,7 @@ export default function AdminDashboard() {
                 <tr key={tenant.id} className="hover:bg-[#1A2235] transition cursor-pointer">
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-[#2E86AB]/10 flex items-center justify-center text-xs text-[#2E86AB] font-semibold">
+                      <div className="w-8 h-8 rounded-lg bg-[#0A66C2]/10 flex items-center justify-center text-xs text-[#0A66C2] font-semibold">
                         {tenant.company_name?.substring(0, 2).toUpperCase()}
                       </div>
                       <span className="text-white font-medium">{tenant.company_name}</span>
@@ -254,13 +254,13 @@ export default function AdminDashboard() {
               <div>
                 <label className="block text-xs font-medium text-[#94A3B8] mb-1.5">Firmenname</label>
                 <input value={inviteCompany} onChange={e => setInviteCompany(e.target.value)}
-                  className="w-full bg-[#0B0E14] border border-[#1E293B] rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-[#64748B] focus:outline-none focus:border-[#2E86AB]/50"
+                  className="w-full bg-[#0A0A14] border border-[#1E293B] rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-[#64748B] focus:outline-none focus:border-[#0A66C2]/50"
                   placeholder="Firma GmbH" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-[#94A3B8] mb-1.5">E-Mail</label>
                 <input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)}
-                  className="w-full bg-[#0B0E14] border border-[#1E293B] rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-[#64748B] focus:outline-none focus:border-[#2E86AB]/50"
+                  className="w-full bg-[#0A0A14] border border-[#1E293B] rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-[#64748B] focus:outline-none focus:border-[#0A66C2]/50"
                   placeholder="kunde@firma.de" />
               </div>
               <div className="flex gap-3 pt-2">
@@ -269,7 +269,7 @@ export default function AdminDashboard() {
                   Abbrechen
                 </button>
                 <button onClick={inviteCustomer} disabled={inviting || !inviteEmail || !inviteCompany}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#2E86AB] hover:bg-[#246E8F] text-white rounded-lg text-sm font-medium transition disabled:opacity-50">
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0A66C2] hover:bg-[#084D94] text-white rounded-lg text-sm font-medium transition disabled:opacity-50">
                   <Mail className="w-4 h-4" />
                   {inviting ? "Wird gesendet..." : "Einladung senden"}
                 </button>

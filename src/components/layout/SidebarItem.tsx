@@ -30,42 +30,46 @@ export function SidebarItem({ icon, label, path, locked, children }: SidebarItem
     <div>
       <button
         onClick={handleClick}
-        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group ${
+        className={`relative w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 group ${
           isActive && !children
-            ? "bg-[#2E86AB]/15 text-[#2E86AB]"
+            ? "bg-[#0A66C2]/10 text-[#0A66C2]"
             : locked
-            ? "text-[#64748B] hover:bg-[#1A2235]"
-            : "text-[#94A3B8] hover:bg-[#1A2235] hover:text-white"
+            ? "text-[#475569] hover:bg-[#111827]"
+            : "text-[#94A3B8] hover:bg-[#111827] hover:text-white"
         }`}
       >
-        <span className={`w-5 h-5 flex-shrink-0 ${isActive && !children ? "text-[#2E86AB]" : ""}`}>
+        {/* Active indicator bar */}
+        {isActive && !children && (
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#0A66C2] rounded-r-full" />
+        )}
+        <span className={`w-5 h-5 flex-shrink-0 ${isActive && !children ? "text-[#0A66C2]" : ""}`}>
           {icon}
         </span>
         <span className="flex-1 text-left truncate">{label}</span>
-        {locked && <Lock className="w-3.5 h-3.5 text-[#64748B] flex-shrink-0" />}
+        {locked && <Lock className="w-3 h-3 text-[#475569]/50 flex-shrink-0" />}
         {children && (
-          <ChevronDown className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""} ${locked ? "text-[#64748B]" : "text-[#64748B]"}`} />
+          <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 text-[#475569] ${open ? "rotate-180" : ""}`} />
         )}
       </button>
       {children && open && (
-        <div className="ml-4 mt-1 space-y-0.5 border-l border-[#1E293B] pl-3">
+        <div className="ml-5 mt-0.5 space-y-0.5 border-l border-[#1E293B] pl-3">
           {children.map((child) => {
             const childActive = location.pathname === child.path;
             return (
               <button
                 key={child.path}
                 onClick={() => navigate(child.path)}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-all ${
+                className={`relative w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[12px] transition-all duration-150 ${
                   childActive
-                    ? "bg-[#2E86AB]/15 text-[#2E86AB]"
+                    ? "bg-[#0A66C2]/10 text-[#0A66C2] font-medium"
                     : child.locked
-                    ? "text-[#64748B] hover:bg-[#1A2235]"
-                    : "text-[#94A3B8] hover:bg-[#1A2235] hover:text-white"
+                    ? "text-[#475569] hover:bg-[#111827]"
+                    : "text-[#94A3B8] hover:bg-[#111827] hover:text-white"
                 }`}
               >
                 <span className="w-4 h-4 flex-shrink-0">{child.icon}</span>
                 <span className="flex-1 text-left truncate">{child.label}</span>
-                {child.locked && <Lock className="w-3 h-3 text-[#64748B] flex-shrink-0" />}
+                {child.locked && <Lock className="w-2.5 h-2.5 text-[#475569]/50 flex-shrink-0" />}
               </button>
             );
           })}

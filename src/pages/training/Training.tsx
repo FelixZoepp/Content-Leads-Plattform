@@ -13,7 +13,7 @@ const modules = [
 
 function StatusIcon({ status }: { status: string }) {
   if (status === "completed") return <CheckCircle2 className="w-5 h-5 text-[#10B981]" />;
-  if (status === "in_progress") return <PlayCircle className="w-5 h-5 text-[#2E86AB]" />;
+  if (status === "in_progress") return <PlayCircle className="w-5 h-5 text-[#0A66C2]" />;
   return <Circle className="w-5 h-5 text-[#64748B]" />;
 }
 
@@ -28,13 +28,13 @@ export default function Training() {
         <span className="text-sm text-[#94A3B8]">{pct}% abgeschlossen</span>
       </div>
       <div className="w-full h-2 bg-[#1E293B] rounded-full">
-        <div className="h-full bg-[#2E86AB] rounded-full transition-all" style={{ width: `${pct}%` }} />
+        <div className="h-full bg-[#0A66C2] rounded-full transition-all" style={{ width: `${pct}%` }} />
       </div>
       <div className="space-y-3">
         {modules.map(m => (
-          <div key={m.num} className="bg-[#111827] border border-[#1E293B] rounded-2xl p-5 hover:border-[#2E86AB]/30 transition cursor-pointer">
+          <div key={m.num} className="bg-[#111827] border border-[#1E293B] rounded-2xl p-5 hover:border-[#0A66C2]/30 transition cursor-pointer">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-[#0B0E14] border border-[#1E293B] flex items-center justify-center text-sm font-semibold text-[#94A3B8]">
+              <div className="w-10 h-10 rounded-full bg-[#0A0A14] border border-[#1E293B] flex items-center justify-center text-sm font-semibold text-[#94A3B8]">
                 {m.num}
               </div>
               <div className="flex-1">

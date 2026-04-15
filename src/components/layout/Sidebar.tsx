@@ -11,16 +11,16 @@ import {
 export function Sidebar() {
   const { userRole } = useAuth();
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-[220px] bg-[#0B0E14] border-r border-[#1E293B] flex flex-col z-50">
+    <aside className="fixed left-0 top-0 bottom-0 w-[220px] bg-[#0A0A14] border-r border-[#1E293B] flex flex-col z-50">
       {/* Logo */}
-      <div className="px-4 py-5 border-b border-[#1E293B]">
+      <div className="px-4 py-4 border-b border-[#1E293B]">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#2E86AB]/20 flex items-center justify-center">
-            <TrendingUp className="w-4 h-4 text-[#2E86AB]" />
+          <div className="w-8 h-8 rounded-lg bg-[#0A66C2] flex items-center justify-center">
+            <TrendingUp className="w-4 h-4 text-white" />
           </div>
           <div>
-            <div className="text-sm font-semibold text-white">Content Leads</div>
-            <div className="text-[11px] text-[#94A3B8]">Platform</div>
+            <div className="text-[14px] font-black tracking-tight text-white">Content-Leads</div>
+            <div className="text-[10px] text-[#64748B] font-medium tracking-wide uppercase">Platform</div>
           </div>
         </div>
       </div>
