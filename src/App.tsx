@@ -23,6 +23,9 @@ const OverviewPage = lazy(() => import("./pages/consulting/OverviewPage"));
 const ReportsPage = lazy(() => import("./pages/consulting/ReportsPage"));
 const CSATPage = lazy(() => import("./pages/consulting/CSATPage"));
 const AssetPage = lazy(() => import("./pages/consulting/AssetPage"));
+const AssetOverview = lazy(() => import("./pages/consulting/AssetOverview"));
+const KPIComparison = lazy(() => import("./pages/consulting/KPIComparison"));
+const ClientReport = lazy(() => import("./pages/consulting/ClientReport"));
 
 // Platform pages
 const Auth = lazy(() => import("./pages/Auth"));
@@ -44,14 +47,14 @@ const OutreachLocked = lazy(() => import("./pages/OutreachLocked"));
 const LockedPlaceholder = lazy(() => import("./pages/OutreachLocked"));
 
 const Loader = () => (
-  <div className="flex min-h-screen items-center justify-center bg-[#0A0A14]">
-    <div className="w-8 h-8 border-4 border-[#0A66C2] border-t-transparent rounded-full animate-spin" />
+  <div className="flex min-h-screen items-center justify-center" style={{ background: "#0A0B0B" }}>
+    <div className="w-8 h-8 border-4 border-[#C5A059] border-t-transparent rounded-full animate-spin" />
   </div>
 );
 
 const SubLoader = () => (
   <div className="flex justify-center py-20">
-    <div className="w-6 h-6 border-4 border-[#0A66C2] border-t-transparent rounded-full animate-spin" />
+    <div className="w-6 h-6 border-4 border-[#C5A059] border-t-transparent rounded-full animate-spin" />
   </div>
 );
 
@@ -82,7 +85,10 @@ function DashboardRoutes() {
           <Route path="ai" element={<WithDashboardData><AIPage /></WithDashboardData>} />
           <Route path="reports" element={<WithDashboardData><ReportsPage /></WithDashboardData>} />
           <Route path="csat" element={<WithDashboardData><CSATPage /></WithDashboardData>} />
+          <Route path="assets" element={<WithDashboardData><AssetOverview /></WithDashboardData>} />
           <Route path="assets/:assetType" element={<WithDashboardData><AssetPage /></WithDashboardData>} />
+          <Route path="kpi-comparison" element={<WithDashboardData><KPIComparison /></WithDashboardData>} />
+          <Route path="client-report" element={<WithDashboardData><ClientReport /></WithDashboardData>} />
           <Route path="content/calendar" element={<WithDashboardData><ContentCalendarPage /></WithDashboardData>} />
 
           {/* Outreach — locked until July */}

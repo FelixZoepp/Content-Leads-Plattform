@@ -4,7 +4,7 @@ import {
   LayoutDashboard, CalendarDays, Radio,
   FileText, PenTool, BarChart3, DollarSign, Bot,
   GraduationCap, MessageCircle, Video, Settings, HelpCircle,
-  Shield, Target, LineChart, Zap
+  Shield, Target, LineChart, Zap, Package, GitCompare, ClipboardList
 } from "lucide-react";
 
 export function Sidebar() {
@@ -63,6 +63,14 @@ export function Sidebar() {
         <SidebarItem icon={<FileText className="w-5 h-5" />} label="Management" path="/dashboard/content/management" locked />
         <SidebarItem icon={<PenTool className="w-5 h-5" />} label="Post Generator" path="/dashboard/content/generator" locked />
         <SidebarItem icon={<BarChart3 className="w-5 h-5" />} label="Analytics" path="/dashboard/content/analytics" locked />
+
+        {/* PLAYBOOK */}
+        <div className="pt-5 pb-2 px-3">
+          <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[rgba(249,249,249,0.3)]">Playbook</span>
+        </div>
+        <SidebarItem icon={<Package className="w-5 h-5" />} label="Alle Assets" path="/dashboard/assets" />
+        <SidebarItem icon={<GitCompare className="w-5 h-5" />} label="KPI-Vergleich" path="/dashboard/kpi-comparison" />
+        <SidebarItem icon={<ClipboardList className="w-5 h-5" />} label="Client Report" path="/dashboard/client-report" />
 
         {/* STUDIO */}
         <div className="pt-5 pb-2 px-3">
