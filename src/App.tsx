@@ -37,6 +37,7 @@ const Settings = lazy(() => import("./pages/Settings"));
 const Support = lazy(() => import("./pages/Support"));
 const Training = lazy(() => import("./pages/training/Training"));
 const Community = lazy(() => import("./pages/community/Community"));
+const SetPassword = lazy(() => import("./pages/SetPassword"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdvisorDashboard = lazy(() => import("./pages/AdvisorDashboard"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -132,6 +133,7 @@ export default function App() {
         <Suspense fallback={<Loader />}>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/set-password" element={<SetPassword />} />
             <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
             <Route path="/generating" element={<ProtectedRoute><GeneratingAssets /></ProtectedRoute>} />
             <Route
