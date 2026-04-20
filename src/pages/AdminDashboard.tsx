@@ -132,12 +132,21 @@ export default function AdminDashboard() {
     if (!advisorEmail) return;
     setInvitingAdvisor(true);
     try {
-      await supabase.functions.invoke("invite-advisor", {
+      const { data, error } = await supabase.functions.invoke("invite-advisor", {
         body: { email: advisorEmail, full_name: advisorName },
       });
-      setAdvisorEmail(""); setAdvisorName(""); setShowInviteAdvisor(false);
-      await loadData();
-    } catch (err) { console.error("Advisor invite error:", err); }
+      if (error) {
+        alert(`Fehler: ${error.message || JSON.stringify(error)}`);
+        console.error("Advisor invite error:", error);
+      } else {
+        alert(data?.message || "Berater erfolgreich eingeladen!");
+        setAdvisorEmail(""); setAdvisorName(""); setShowInviteAdvisor(false);
+        await loadData();
+      }
+    } catch (err: any) {
+      alert(`Fehler: ${err.message || "Unbekannter Fehler"}`);
+      console.error("Advisor invite error:", err);
+    }
     setInvitingAdvisor(false);
   }
 
