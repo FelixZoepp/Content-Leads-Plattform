@@ -76,10 +76,14 @@ export default function Dashboard() {
   // Week streak
   const [weekEntries, setWeekEntries] = useState<string[]>([]);
 
+  // KPI status evaluation
+  const [weeklyAvg, setWeeklyAvg] = useState<Record<string, number>>({});
+
   useEffect(() => {
     if (!user) return;
     loadTodayEntry();
     loadWeekStreak();
+    loadWeeklyAvg();
   }, [user]);
 
   async function loadTodayEntry() {
@@ -172,6 +176,54 @@ export default function Dashboard() {
     setWeeklySaved(true);
     setSavingWeekly(false);
   }
+
+  async function loadWeeklyAvg() {
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const { data } = await (supabase as any)
+      .from("kpi_entries")
+      .select("*")
+      .eq("user_id", user!.id)
+      .gte("date", sevenDaysAgo.toISOString().split("T")[0])
+      .order("date", { ascending: false });
+
+    if (data && data.length > 0) {
+      const avg: Record<string, number> = {};
+      const keys = ["dms_sent", "dm_replies", "termine", "setting_calls", "closing_calls", "abschluesse", "looms_sent", "mails_sent", "mail_replies"];
+      keys.forEach(k => {
+        const vals = data.map((d: any) => Number(d[k]) || 0);
+        avg[k] = vals.reduce((s: number, v: number) => s + v, 0) / data.length;
+      });
+      setWeeklyAvg(avg);
+    }
+  }
+
+  // Benchmarks with actions
+  const KPI_BENCHMARKS = [
+    { key: "dms_sent", label: "DMs / Tag", target: 20, icon: Send, color: "#8BB6E8",
+      actions: ["Blocke 1h täglich für LinkedIn Outreach", "Nutze gespeicherte Nachrichtenvorlagen", "Ziel: 20 DMs pro Arbeitstag"] },
+    { key: "dm_replies", label: "Antworten / Tag", target: 5, icon: MessageSquare, color: "#B49AE8",
+      actions: ["Personalisiere jede erste Nachricht", "Nutze Loom-Videos für höhere Antwortrate", "Follow-up nach 48h ohne Antwort"] },
+    { key: "termine", label: "Termine / Tag", target: 2, icon: CalendarDays, color: "#7FC29B",
+      actions: ["Immer einen konkreten Terminvorschlag machen", "Nutze Calendly-Link in der 2. DM", "Qualifiziere Leads vor dem Termin-Pitch"] },
+    { key: "setting_calls", label: "Settings / Tag", target: 2, icon: Phone, color: "#E9CB8B",
+      actions: ["Erinnerung 24h + 1h vor dem Call senden", "Setting-Skript vor jedem Call durchgehen", "Video-Vorstellung statt nur Kalender-Link"] },
+    { key: "closing_calls", label: "Closings / Tag", target: 1, icon: Phone, color: "#C5A059",
+      actions: ["Recap des Settings zu Beginn", "Closing-Skript mit allen Einwänden üben", "Immer am selben Tag Follow-up senden"] },
+    { key: "abschluesse", label: "Deals / Tag", target: 0.5, icon: TrendingUp, color: "#7FC29B",
+      actions: ["Preisanker im Setting setzen", "Limitierte Plätze kommunizieren", "Onboarding-Termin direkt im Call buchen"] },
+  ];
+
+  const kpiStatuses = KPI_BENCHMARKS.map(b => {
+    const avg = weeklyAvg[b.key] || 0;
+    const pct = b.target > 0 ? Math.min(100, (avg / b.target) * 100) : 0;
+    const status = pct >= 80 ? "on-track" : pct >= 50 ? "off-track" : "critical";
+    return { ...b, avg, pct, status };
+  });
+
+  const onTrack = kpiStatuses.filter(k => k.status === "on-track").length;
+  const offTrack = kpiStatuses.filter(k => k.status === "off-track").length;
+  const critical = kpiStatuses.filter(k => k.status === "critical").length;
 
   const dailyFilled = DAILY_FIELDS.filter(f => parseInt(dailyValues[f.key] || "0") > 0).length;
   const dailyPct = Math.round((dailyFilled / DAILY_FIELDS.length) * 100);
@@ -289,6 +341,63 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* ── KPI Status / Benchmark Bewertung ── */}
+      {Object.keys(weeklyAvg).length > 0 && (
+        <div className="glass-panel fade-up" style={{ animationDelay: "280ms" }}>
+          <div className="relative z-[2]">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <span className="text-[9px] font-bold tracking-[0.3em] uppercase text-[#E9CB8B] block mb-1">Bewertung</span>
+                <h2 className="text-[15px] text-white" style={{ fontFamily: "var(--font-serif)" }}>KPI-Status · letzte 7 Tage</h2>
+              </div>
+              <div className="flex gap-3 text-[11px]">
+                <span className="text-[#7FC29B]">{onTrack} on track</span>
+                <span className="text-[#E9CB8B]">{offTrack} Achtung</span>
+                <span className="text-[#E87467]">{critical} kritisch</span>
+              </div>
+            </div>
+            <div className="space-y-3">
+              {kpiStatuses.map((kpi) => {
+                const statusColor = kpi.status === "on-track" ? "#7FC29B" : kpi.status === "off-track" ? "#E9CB8B" : "#E87467";
+                return (
+                  <div key={kpi.key} className="rounded-xl border border-[rgba(249,249,249,0.06)] p-3" style={{ background: "rgba(249,249,249,0.02)", borderLeft: `3px solid ${statusColor}` }}>
+                    <div className="flex items-center gap-3">
+                      <kpi.icon className="w-4 h-4 flex-shrink-0" style={{ color: kpi.color }} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[12px] text-white font-medium">{kpi.label}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[13px] text-white" style={{ fontFamily: "var(--font-serif)" }}>
+                              {kpi.avg.toFixed(1)}
+                            </span>
+                            <span className="text-[10px] text-[rgba(249,249,249,0.3)]">/ {kpi.target} Ziel</span>
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ color: statusColor, background: `${statusColor}18` }}>
+                              {Math.round(kpi.pct)}%
+                            </span>
+                          </div>
+                        </div>
+                        <div className="h-1 bg-[rgba(249,249,249,0.06)] rounded-full overflow-hidden mb-2">
+                          <div className="h-full rounded-full" style={{ width: `${Math.min(kpi.pct, 100)}%`, background: statusColor }} />
+                        </div>
+                        {kpi.status !== "on-track" && (
+                          <div className="flex flex-wrap gap-2">
+                            {kpi.actions.slice(0, 2).map((action, ai) => (
+                              <span key={ai} className="text-[10px] text-[rgba(249,249,249,0.5)] bg-[rgba(249,249,249,0.04)] px-2 py-0.5 rounded">
+                                → {action}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Tägliche Aufgaben: Sales & Outbound KPIs (Mo-Fr) ── */}
       <div className="glass-panel fade-up" style={{ animationDelay: "300ms" }}>
