@@ -1,35 +1,82 @@
-import { Search, Bell } from "lucide-react";
+import { Search, Bell, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 export function TopBar() {
   const { user } = useAuth();
-  const initials = user?.user_metadata?.name
-    ? user.user_metadata.name.split(" ").map((n: string) => n[0]).join("").toUpperCase()
-    : "CL";
+  const name = user?.user_metadata?.name || "dort";
+  const now = new Date();
+  const weekday = now.toLocaleDateString("de-DE", { weekday: "long" });
+  const kw = getISOWeek(now);
 
   return (
-    <header className="h-[52px] border-b border-[#1E293B] bg-[#0A0A14]/90 backdrop-blur-md flex items-center justify-between px-6">
-      {/* Search */}
-      <div className="relative w-72">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#475569]" />
-        <input
-          type="text"
-          placeholder="Suchen..."
-          className="w-full bg-[#111827] border border-[#1E293B] rounded-lg pl-9 pr-12 py-1.5 text-[13px] text-white placeholder:text-[#475569] focus:outline-none focus:border-[#0A66C2]/40 transition"
-        />
-        <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-[#475569] bg-[#0A0A14] px-1.5 py-0.5 rounded border border-[#1E293B] font-mono">⌘K</kbd>
+    <header
+      className="fade-up mx-4 mt-4 mb-2 flex items-center gap-5 px-5 py-3.5 rounded-[14px] border border-[rgba(249,249,249,0.08)]"
+      style={{
+        background: "rgba(249, 249, 249, 0.04)",
+        backdropFilter: "blur(18px) saturate(140%)",
+        WebkitBackdropFilter: "blur(18px) saturate(140%)",
+      }}
+    >
+      {/* Greeting */}
+      <div className="flex flex-col gap-0.5">
+        <span className="text-[9px] font-bold tracking-[0.3em] uppercase text-[#E9CB8B]">
+          {weekday} · KW {kw}
+        </span>
+        <span className="text-[22px] text-white" style={{ fontFamily: "var(--font-serif)", letterSpacing: "-0.01em" }}>
+          Guten {getGreeting()}, {name.split(" ")[0]}.
+        </span>
       </div>
 
-      {/* Right */}
-      <div className="flex items-center gap-3">
-        <button className="relative p-1.5 rounded-lg text-[#94A3B8] hover:bg-[#111827] hover:text-white transition">
-          <Bell className="w-[18px] h-[18px]" />
-          <span className="absolute top-1 right-1 w-[6px] h-[6px] bg-[#E24B4A] rounded-full ring-2 ring-[#0A0A14]" />
+      {/* Search */}
+      <div className="flex-1 max-w-[360px] ml-auto flex items-center gap-2.5 px-3.5 py-2.5 rounded-[10px] bg-[rgba(10,11,11,0.4)] border border-[rgba(249,249,249,0.08)]">
+        <Search className="w-3.5 h-3.5 text-[rgba(249,249,249,0.3)]" />
+        <input
+          type="text"
+          placeholder="Suchen… (Lead, Kunde, Report)"
+          className="flex-1 bg-transparent border-0 text-[13px] text-white placeholder:text-[rgba(249,249,249,0.3)] outline-none"
+        />
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-2">
+        <button
+          className="relative w-[38px] h-[38px] flex items-center justify-center rounded-[10px] border border-[rgba(249,249,249,0.08)] text-[rgba(249,249,249,0.72)] transition-all duration-200 hover:bg-[rgba(249,249,249,0.08)] hover:text-white hover:border-[rgba(249,249,249,0.16)]"
+          style={{ background: "rgba(249, 249, 249, 0.04)" }}
+          title="Benachrichtigungen"
+        >
+          <Bell className="w-4 h-4" />
+          <span
+            className="absolute top-[9px] right-[9px] w-[7px] h-[7px] rounded-full"
+            style={{
+              background: "#E9CB8B",
+              boxShadow: "0 0 8px #E9CB8B",
+              animation: "pulseDot 2s ease-in-out infinite",
+            }}
+          />
         </button>
-        <div className="w-7 h-7 rounded-full bg-[#0A66C2] flex items-center justify-center text-white text-[10px] font-bold">
-          {initials}
-        </div>
+        <button
+          className="w-[38px] h-[38px] flex items-center justify-center rounded-[10px] border border-[rgba(249,249,249,0.08)] text-[rgba(249,249,249,0.72)] transition-all duration-200 hover:bg-[rgba(249,249,249,0.08)] hover:text-white hover:border-[rgba(249,249,249,0.16)]"
+          style={{ background: "rgba(249, 249, 249, 0.04)" }}
+          title="Einstellungen"
+        >
+          <Settings className="w-4 h-4" />
+        </button>
       </div>
     </header>
   );
+}
+
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return "Morgen";
+  if (h < 18) return "Nachmittag";
+  return "Abend";
+}
+
+function getISOWeek(d: Date): number {
+  const date = new Date(d.getTime());
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + 3 - ((date.getDay() + 6) % 7));
+  const week1 = new Date(date.getFullYear(), 0, 4);
+  return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
 }

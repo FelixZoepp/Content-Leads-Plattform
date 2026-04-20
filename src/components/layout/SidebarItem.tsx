@@ -30,46 +30,50 @@ export function SidebarItem({ icon, label, path, locked, children }: SidebarItem
     <div>
       <button
         onClick={handleClick}
-        className={`relative w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 group ${
+        className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 group ${
           isActive && !children
-            ? "bg-[#0A66C2]/10 text-[#0A66C2]"
+            ? "text-white border border-[rgba(197,160,89,0.3)]"
             : locked
-            ? "text-[#475569] hover:bg-[#111827]"
-            : "text-[#94A3B8] hover:bg-[#111827] hover:text-white"
+            ? "text-[rgba(249,249,249,0.3)] hover:bg-[rgba(249,249,249,0.04)] border border-transparent"
+            : "text-[rgba(249,249,249,0.72)] hover:bg-[rgba(249,249,249,0.04)] hover:text-white border border-transparent"
         }`}
+        style={
+          isActive && !children
+            ? {
+                background: "linear-gradient(135deg, rgba(197,160,89,0.18), rgba(119,90,25,0.1))",
+                boxShadow: "inset 0 1px 0 rgba(249,249,249,0.08), 0 0 24px rgba(197,160,89,0.12)",
+              }
+            : undefined
+        }
       >
-        {/* Active indicator bar */}
-        {isActive && !children && (
-          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#0A66C2] rounded-r-full" />
-        )}
-        <span className={`w-5 h-5 flex-shrink-0 ${isActive && !children ? "text-[#0A66C2]" : ""}`}>
+        <span className={`w-5 h-5 flex-shrink-0 transition-colors ${isActive && !children ? "text-[#E9CB8B]" : ""}`}>
           {icon}
         </span>
         <span className="flex-1 text-left truncate">{label}</span>
-        {locked && <Lock className="w-3 h-3 text-[#475569]/50 flex-shrink-0" />}
+        {locked && <Lock className="w-3 h-3 text-[rgba(249,249,249,0.2)] flex-shrink-0" />}
         {children && (
-          <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 text-[#475569] ${open ? "rotate-180" : ""}`} />
+          <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 text-[rgba(249,249,249,0.3)] ${open ? "rotate-180" : ""}`} />
         )}
       </button>
       {children && open && (
-        <div className="ml-5 mt-0.5 space-y-0.5 border-l border-[#1E293B] pl-3">
+        <div className="ml-5 mt-0.5 space-y-0.5 border-l border-[rgba(249,249,249,0.08)] pl-3">
           {children.map((child) => {
             const childActive = location.pathname === child.path;
             return (
               <button
                 key={child.path}
                 onClick={() => navigate(child.path)}
-                className={`relative w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[12px] transition-all duration-150 ${
+                className={`relative w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[12px] transition-all duration-200 ${
                   childActive
-                    ? "bg-[#0A66C2]/10 text-[#0A66C2] font-medium"
+                    ? "bg-[rgba(197,160,89,0.12)] text-[#E9CB8B] font-medium"
                     : child.locked
-                    ? "text-[#475569] hover:bg-[#111827]"
-                    : "text-[#94A3B8] hover:bg-[#111827] hover:text-white"
+                    ? "text-[rgba(249,249,249,0.3)] hover:bg-[rgba(249,249,249,0.04)]"
+                    : "text-[rgba(249,249,249,0.5)] hover:bg-[rgba(249,249,249,0.04)] hover:text-white"
                 }`}
               >
                 <span className="w-4 h-4 flex-shrink-0">{child.icon}</span>
                 <span className="flex-1 text-left truncate">{child.label}</span>
-                {child.locked && <Lock className="w-2.5 h-2.5 text-[#475569]/50 flex-shrink-0" />}
+                {child.locked && <Lock className="w-2.5 h-2.5 text-[rgba(249,249,249,0.2)] flex-shrink-0" />}
               </button>
             );
           })}
