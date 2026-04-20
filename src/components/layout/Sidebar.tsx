@@ -76,7 +76,7 @@ export function Sidebar() {
         <div className="pt-5 pb-2 px-3">
           <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[rgba(249,249,249,0.3)]">Studio</span>
         </div>
-        <SidebarItem icon={<DollarSign className="w-5 h-5" />} label="Finance" path="/dashboard/finance" locked />
+        <SidebarItem icon={<DollarSign className="w-5 h-5" />} label="Finance" path="/dashboard/finance" />
         <SidebarItem icon={<Target className="w-5 h-5" />} label="KPIs" path="/dashboard/kpis" />
         <SidebarItem icon={<LineChart className="w-5 h-5" />} label="Reports" path="/dashboard/reports" />
 
