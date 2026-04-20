@@ -92,9 +92,11 @@ Deno.serve(async (req) => {
 
     // Create/update profile
     await adminClient.from("profiles").upsert({
-      user_id: userId,
-      full_name: full_name || email,
-    }, { onConflict: "user_id" });
+      id: userId,
+      name: full_name || email,
+      email: email,
+      role: "advisor",
+    }, { onConflict: "id" });
 
     return new Response(
       JSON.stringify({

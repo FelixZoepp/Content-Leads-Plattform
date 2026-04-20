@@ -133,7 +133,7 @@ export default function AdminDashboard() {
     setInvitingAdvisor(true);
     try {
       await supabase.functions.invoke("invite-advisor", {
-        body: { email: advisorEmail, name: advisorName },
+        body: { email: advisorEmail, full_name: advisorName },
       });
       setAdvisorEmail(""); setAdvisorName(""); setShowInviteAdvisor(false);
       await loadData();
