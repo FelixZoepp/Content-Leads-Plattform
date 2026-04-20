@@ -32,6 +32,7 @@ export const SignupEmail = ({
     <Preview>E-Mail bestätigen – {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
+        <Text style={brand}>Content-Leads</Text>
         <Heading style={h1}>E-Mail-Adresse bestätigen</Heading>
         <Text style={text}>
           Willkommen bei{' '}
@@ -76,11 +77,19 @@ const text = {
 }
 const link = { color: 'inherit', textDecoration: 'underline' }
 const button = {
-  backgroundColor: 'hsl(217, 91%, 60%)',
+  backgroundColor: '#C5A059',
   color: '#ffffff',
   fontSize: '14px',
   borderRadius: '8px',
   padding: '12px 20px',
   textDecoration: 'none',
+}
+const brand = {
+  fontSize: '11px',
+  fontWeight: 'bold' as const,
+  letterSpacing: '0.2em',
+  textTransform: 'uppercase' as const,
+  color: '#C5A059',
+  margin: '0 0 24px',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }

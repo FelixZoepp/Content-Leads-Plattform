@@ -22,6 +22,7 @@ export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => 
     <Preview>Dein Bestätigungscode</Preview>
     <Body style={main}>
       <Container style={container}>
+        <Text style={brand}>Content-Leads</Text>
         <Heading style={h1}>Identität bestätigen</Heading>
         <Text style={text}>Verwende den folgenden Code, um deine Identität zu bestätigen:</Text>
         <Text style={codeStyle}>{token}</Text>
@@ -56,5 +57,13 @@ const codeStyle = {
   fontWeight: 'bold' as const,
   color: '#1a1a2e',
   margin: '0 0 30px',
+}
+const brand = {
+  fontSize: '11px',
+  fontWeight: 'bold' as const,
+  letterSpacing: '0.2em',
+  textTransform: 'uppercase' as const,
+  color: '#C5A059',
+  margin: '0 0 24px',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }

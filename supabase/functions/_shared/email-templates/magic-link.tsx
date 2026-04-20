@@ -27,6 +27,7 @@ export const MagicLinkEmail = ({
     <Preview>Dein Login-Link für {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
+        <Text style={brand}>Content-Leads</Text>
         <Heading style={h1}>Dein Login-Link</Heading>
         <Text style={text}>
           Klicke auf den Button, um dich bei {siteName} anzumelden.
@@ -60,11 +61,19 @@ const text = {
   margin: '0 0 25px',
 }
 const button = {
-  backgroundColor: 'hsl(217, 91%, 60%)',
+  backgroundColor: '#C5A059',
   color: '#ffffff',
   fontSize: '14px',
   borderRadius: '8px',
   padding: '12px 20px',
   textDecoration: 'none',
+}
+const brand = {
+  fontSize: '11px',
+  fontWeight: 'bold' as const,
+  letterSpacing: '0.2em',
+  textTransform: 'uppercase' as const,
+  color: '#C5A059',
+  margin: '0 0 24px',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
