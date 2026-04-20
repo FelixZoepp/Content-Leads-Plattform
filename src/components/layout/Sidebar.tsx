@@ -1,11 +1,10 @@
 import { SidebarItem } from "./SidebarItem";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  LayoutDashboard, CalendarDays, Radio, Mail,
-  Users, FileText, PenTool, BarChart3, DollarSign, Bot,
-  GraduationCap, MessageCircle, Video, Gamepad2, Settings, HelpCircle,
-  TrendingUp, Shield, Target, LineChart, Kanban, UserSearch, Send,
-  GitBranch, Globe, Upload, Activity, PhoneCall, BookOpen, Zap
+  LayoutDashboard, CalendarDays, Radio,
+  FileText, PenTool, BarChart3, DollarSign, Bot,
+  GraduationCap, MessageCircle, Video, Settings, HelpCircle,
+  Shield, Target, LineChart, Zap
 } from "lucide-react";
 
 export function Sidebar() {
@@ -26,14 +25,17 @@ export function Sidebar() {
               fontFamily: "var(--font-serif)",
             }}
           >
-            Z
+            C
           </div>
           <div>
             <div
-              className="text-[13px] tracking-[0.22em] uppercase text-white"
+              className="text-[11px] tracking-[0.18em] uppercase text-white leading-tight"
               style={{ fontFamily: "var(--font-serif)" }}
             >
-              Zoepp Admin
+              Content-Leads
+            </div>
+            <div className="text-[9px] tracking-[0.2em] uppercase text-[rgba(249,249,249,0.4)]">
+              Consulting Plattform
             </div>
           </div>
         </div>
@@ -47,52 +49,20 @@ export function Sidebar() {
         <SidebarItem icon={<LayoutDashboard className="w-5 h-5" />} label="Dashboard" path="/dashboard" />
         <SidebarItem icon={<CalendarDays className="w-5 h-5" />} label="Calendar" path="/dashboard/calendar" />
 
-        {/* OUTREACH */}
+        {/* OUTREACH — locked, not expandable */}
         <div className="pt-5 pb-2 px-3">
           <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[rgba(249,249,249,0.3)]">Outreach</span>
         </div>
-        <SidebarItem
-          icon={<Radio className="w-5 h-5" />}
-          label="Outreach"
-          children={[
-            { icon: <LayoutDashboard className="w-4 h-4" />, label: "Dashboard", path: "/dashboard/outreach/dashboard" },
-            { icon: <Users className="w-4 h-4" />, label: "Kontakte", path: "/dashboard/outreach/contacts" },
-            { icon: <Kanban className="w-4 h-4" />, label: "Pipeline", path: "/dashboard/outreach/pipeline" },
-            { icon: <Send className="w-4 h-4" />, label: "Kampagnen", path: "/dashboard/outreach/campaigns" },
-            { icon: <GitBranch className="w-4 h-4" />, label: "Sequenzen", path: "/dashboard/outreach/sequences" },
-            { icon: <PhoneCall className="w-4 h-4" />, label: "Power Dialer", path: "/dashboard/outreach/dialer" },
-            { icon: <UserSearch className="w-4 h-4" />, label: "Lead-Recherche", path: "/dashboard/outreach/leads" },
-            { icon: <Mail className="w-4 h-4" />, label: "E-Mail Kampagnen", path: "/dashboard/outreach/email" },
-            { icon: <Globe className="w-4 h-4" />, label: "Landing Pages", path: "/dashboard/outreach/landing-pages" },
-            { icon: <Gamepad2 className="w-4 h-4" />, label: "Team Arena", path: "/dashboard/outreach/team" },
-            { icon: <BarChart3 className="w-4 h-4" />, label: "KPIs", path: "/dashboard/outreach/kpi" },
-            { icon: <Upload className="w-4 h-4" />, label: "Import", path: "/dashboard/outreach/import" },
-          ]}
-        />
+        <SidebarItem icon={<Radio className="w-5 h-5" />} label="Outreach" path="/dashboard/outreach/dashboard" locked />
+        <SidebarItem icon={<Zap className="w-5 h-5" />} label="Sales Tools" path="/dashboard/outreach/scripts" locked />
 
-        {/* SALES TOOLS */}
-        <SidebarItem
-          icon={<Zap className="w-5 h-5" />}
-          label="Sales Tools"
-          children={[
-            { icon: <BookOpen className="w-4 h-4" />, label: "Call Scripts", path: "/dashboard/outreach/scripts" },
-            { icon: <PhoneCall className="w-4 h-4" />, label: "Einwandbehandlung", path: "/dashboard/outreach/objections" },
-            { icon: <TrendingUp className="w-4 h-4" />, label: "Deal Analytics", path: "/dashboard/outreach/analytics" },
-            { icon: <Activity className="w-4 h-4" />, label: "Activity Log", path: "/dashboard/outreach/activity" },
-            { icon: <Video className="w-4 h-4" />, label: "Video Notes", path: "/dashboard/outreach/video" },
-          ]}
-        />
-
-        {/* CONTENT */}
-        <SidebarItem
-          icon={<FileText className="w-5 h-5" />}
-          label="Content"
-          children={[
-            { icon: <FileText className="w-4 h-4" />, label: "Management", path: "/dashboard/content/management", locked: true },
-            { icon: <PenTool className="w-4 h-4" />, label: "Post Generator", path: "/dashboard/content/generator", locked: true },
-            { icon: <BarChart3 className="w-4 h-4" />, label: "Analytics", path: "/dashboard/content/analytics", locked: true },
-          ]}
-        />
+        {/* CONTENT — eigene Sektion */}
+        <div className="pt-5 pb-2 px-3">
+          <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[rgba(249,249,249,0.3)]">Content</span>
+        </div>
+        <SidebarItem icon={<FileText className="w-5 h-5" />} label="Management" path="/dashboard/content/management" locked />
+        <SidebarItem icon={<PenTool className="w-5 h-5" />} label="Post Generator" path="/dashboard/content/generator" locked />
+        <SidebarItem icon={<BarChart3 className="w-5 h-5" />} label="Analytics" path="/dashboard/content/analytics" locked />
 
         {/* STUDIO */}
         <div className="pt-5 pb-2 px-3">
