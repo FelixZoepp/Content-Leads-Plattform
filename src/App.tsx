@@ -38,6 +38,7 @@ const Support = lazy(() => import("./pages/Support"));
 const Training = lazy(() => import("./pages/training/Training"));
 const Community = lazy(() => import("./pages/community/Community"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const AdvisorDashboard = lazy(() => import("./pages/AdvisorDashboard"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 
 // Outreach — locked until July 2025
@@ -114,6 +115,7 @@ function DashboardRoutes() {
 
           {/* Admin */}
           <Route path="admin" element={<AdminDashboard />} />
+          <Route path="advisor" element={<AdvisorDashboard />} />
           <Route path="settings" element={<Settings />} />
           <Route path="support" element={<Support />} />
         </Routes>

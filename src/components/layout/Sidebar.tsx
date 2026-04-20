@@ -4,7 +4,7 @@ import {
   LayoutDashboard, CalendarDays, Radio,
   FileText, PenTool, BarChart3, DollarSign, Bot,
   GraduationCap, MessageCircle, Video, Settings, HelpCircle,
-  Shield, Target, LineChart, Zap, Package, GitCompare, ClipboardList
+  Shield, Target, LineChart, Zap, Package, GitCompare, ClipboardList, UserCheck
 } from "lucide-react";
 
 export function Sidebar() {
@@ -97,8 +97,14 @@ export function Sidebar() {
 
       {/* User card */}
       <div className="px-4 py-4 border-t border-[rgba(249,249,249,0.08)]">
+        {userRole === "advisor" && (
+          <div className="mb-2">
+            <SidebarItem icon={<UserCheck className="w-5 h-5" />} label="Meine Kunden" path="/dashboard/advisor" />
+          </div>
+        )}
         {userRole === "admin" && (
           <div className="mb-2">
+            <SidebarItem icon={<UserCheck className="w-5 h-5" />} label="Berater-View" path="/dashboard/advisor" />
             <SidebarItem icon={<Shield className="w-5 h-5" />} label="Admin" path="/dashboard/admin" />
           </div>
         )}
