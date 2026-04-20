@@ -37,41 +37,11 @@ const Community = lazy(() => import("./pages/community/Community"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 
-// Outreach (Salesflow) pages
-const OutreachContacts = lazy(() => import("./pages/outreach/Contacts"));
-const OutreachPipeline = lazy(() => import("./pages/outreach/Pipeline"));
-const OutreachCampaigns = lazy(() => import("./pages/outreach/Campaigns"));
-const OutreachSequences = lazy(() => import("./pages/outreach/Sequences"));
-const OutreachPowerDialer = lazy(() => import("./pages/outreach/PowerDialer"));
-const OutreachLeadSearch = lazy(() => import("./pages/outreach/LeadSearch"));
-const OutreachEmailCampaigns = lazy(() => import("./pages/outreach/EmailCampaigns"));
-const OutreachEmailTemplates = lazy(() => import("./pages/outreach/EmailTemplates"));
-const OutreachCallScript = lazy(() => import("./pages/outreach/CallScript"));
-const OutreachObjectionLibrary = lazy(() => import("./pages/outreach/ObjectionLibrary"));
-const OutreachDealAnalytics = lazy(() => import("./pages/outreach/DealAnalytics"));
-const OutreachKPI = lazy(() => import("./pages/outreach/OutreachKPI"));
-const OutreachLandingPages = lazy(() => import("./pages/outreach/LandingPageBuilder"));
-const OutreachTeamArena = lazy(() => import("./pages/outreach/TeamArena"));
-const OutreachImportLeads = lazy(() => import("./pages/outreach/ImportLeads"));
-const OutreachActivityLog = lazy(() => import("./pages/outreach/ActivityLog"));
-const OutreachVideoNote = lazy(() => import("./pages/outreach/VideoNote"));
-const OutreachIntegrations = lazy(() => import("./pages/outreach/Integrations"));
+// Outreach — locked until July 2025
+const OutreachLocked = lazy(() => import("./pages/OutreachLocked"));
 
-// Additional outreach pages
-const OutreachDashboard = lazy(() => import("./pages/outreach/SalesflowDashboard"));
-const OutreachToday = lazy(() => import("./pages/outreach/OutreachToday"));
-const OutreachApiKeys = lazy(() => import("./pages/outreach/ApiKeys"));
-const OutreachBilling = lazy(() => import("./pages/outreach/Billing"));
-const OutreachMasterAdmin = lazy(() => import("./pages/outreach/MasterAdmin"));
-const OutreachPartner = lazy(() => import("./pages/outreach/Partner"));
-const OutreachPartnerDashboard = lazy(() => import("./pages/outreach/PartnerDashboard"));
-const OutreachVideoNoteAdmin = lazy(() => import("./pages/outreach/VideoNoteAdmin"));
-const OutreachProfile = lazy(() => import("./pages/outreach/OutreachProfile"));
-const OutreachLeadPagePreview = lazy(() => import("./pages/outreach/LeadPagePreview"));
-const OutreachUpgrade = lazy(() => import("./pages/outreach/Upgrade"));
-
-// Locked placeholder
-const LockedPlaceholder = lazy(() => import("./pages/outreach/Instagram"));
+// Generic locked placeholder (for non-outreach locked features)
+const LockedPlaceholder = lazy(() => import("./pages/OutreachLocked"));
 
 const Loader = () => (
   <div className="flex min-h-screen items-center justify-center bg-[#0A0A14]">
@@ -115,43 +85,11 @@ function DashboardRoutes() {
           <Route path="assets/:assetType" element={<WithDashboardData><AssetPage /></WithDashboardData>} />
           <Route path="content/calendar" element={<WithDashboardData><ContentCalendarPage /></WithDashboardData>} />
 
-          {/* Outreach */}
-          <Route path="outreach/tracking" element={<OutreachKPI />} />
-          <Route path="outreach/contacts" element={<OutreachContacts />} />
-          <Route path="outreach/linkedin" element={<OutreachContacts />} />
-          <Route path="outreach/instagram" element={<LockedPlaceholder />} />
-          <Route path="outreach/email" element={<OutreachEmailCampaigns />} />
-          <Route path="outreach/pipeline" element={<OutreachPipeline />} />
-          <Route path="outreach/campaigns" element={<OutreachCampaigns />} />
-          <Route path="outreach/sequences" element={<OutreachSequences />} />
-          <Route path="outreach/dialer" element={<OutreachPowerDialer />} />
-          <Route path="outreach/leads" element={<OutreachLeadSearch />} />
-          <Route path="outreach/email-templates" element={<OutreachEmailTemplates />} />
-          <Route path="outreach/scripts" element={<OutreachCallScript />} />
-          <Route path="outreach/objections" element={<OutreachObjectionLibrary />} />
-          <Route path="outreach/analytics" element={<OutreachDealAnalytics />} />
-          <Route path="outreach/import" element={<OutreachImportLeads />} />
-          <Route path="outreach/team" element={<OutreachTeamArena />} />
-          <Route path="outreach/landing-pages" element={<OutreachLandingPages />} />
-          <Route path="outreach/activity" element={<OutreachActivityLog />} />
-          <Route path="outreach/video" element={<OutreachVideoNote />} />
-          <Route path="outreach/integrations" element={<OutreachIntegrations />} />
-          <Route path="outreach/dashboard" element={<OutreachDashboard />} />
-          <Route path="outreach/today" element={<OutreachToday />} />
-          <Route path="outreach/api" element={<OutreachApiKeys />} />
-          <Route path="outreach/billing" element={<OutreachBilling />} />
-          <Route path="outreach/profile" element={<OutreachProfile />} />
-          <Route path="outreach/partner" element={<OutreachPartner />} />
-          <Route path="outreach/partner-dashboard" element={<OutreachPartnerDashboard />} />
-          <Route path="outreach/video-admin" element={<OutreachVideoNoteAdmin />} />
-          <Route path="outreach/upgrade" element={<OutreachUpgrade />} />
-          <Route path="outreach/lead-page/:slug" element={<OutreachLeadPagePreview />} />
-          <Route path="outreach/master-admin" element={<OutreachMasterAdmin />} />
+          {/* Outreach — locked until July */}
+          <Route path="outreach/*" element={<OutreachLocked />} />
 
-          {/* CRM (uses Salesflow) */}
-          <Route path="crm" element={<OutreachPipeline />} />
-          <Route path="crm/contacts" element={<OutreachContacts />} />
-          <Route path="crm/pipeline" element={<OutreachPipeline />} />
+          {/* CRM — locked (part of Outreach) */}
+          <Route path="crm/*" element={<OutreachLocked />} />
 
           {/* Content */}
           <Route path="content/management" element={<LockedPlaceholder />} />
@@ -160,9 +98,9 @@ function DashboardRoutes() {
 
           {/* Tools */}
           <Route path="assistant" element={<AIAssistant />} />
-          <Route path="sales-reviewer" element={<OutreachCallScript />} />
+          <Route path="sales-reviewer" element={<OutreachLocked />} />
           <Route path="live" element={<LockedPlaceholder />} />
-          <Route path="games" element={<OutreachTeamArena />} />
+          <Route path="games" element={<OutreachLocked />} />
 
           {/* Learn */}
           <Route path="training" element={<Training />} />

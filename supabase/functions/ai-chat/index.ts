@@ -81,60 +81,53 @@ serve(async (req) => {
 
     const fullSystemPrompt = SYSTEM_PROMPT + tenantContext;
     let reply = "";
+    let lastError = "";
 
-    if (anthropicKey) {
-      // Use Anthropic API
-      const messages = [
-        ...(history || []).map((m: any) => ({ role: m.role, content: m.content })),
-        { role: "user", content: message },
-      ];
+    // Try OpenAI first (more reliable), then Anthropic
+    if (openaiKey) {
+      try {
+        const msgs = [
+          { role: "system", content: fullSystemPrompt },
+          ...(history || []).map((m: any) => ({ role: m.role, content: m.content })),
+          { role: "user", content: message },
+        ];
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ model: "gpt-4o-mini", messages: msgs, max_tokens: 2000, temperature: 0.7 }),
+        });
+        const data = await response.json();
+        if (data.choices?.[0]?.message?.content) {
+          reply = data.choices[0].message.content;
+        } else {
+          lastError = "OpenAI: " + JSON.stringify(data.error || data).substring(0, 150);
+        }
+      } catch (e: any) { lastError = "OpenAI: " + e.message; }
+    }
 
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": anthropicKey,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-5-20241022",
-          max_tokens: 2000,
-          system: fullSystemPrompt,
-          messages,
-        }),
-      });
+    // Fallback: Anthropic
+    if (!reply && anthropicKey) {
+      try {
+        const msgs = [
+          ...(history || []).map((m: any) => ({ role: m.role, content: m.content })),
+          { role: "user", content: message },
+        ];
+        const response = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-api-key": anthropicKey, "anthropic-version": "2023-06-01" },
+          body: JSON.stringify({ model: "claude-sonnet-4-5-20241022", max_tokens: 2000, system: fullSystemPrompt, messages: msgs }),
+        });
+        const data = await response.json();
+        if (data.content?.[0]?.text) {
+          reply = data.content[0].text;
+        } else {
+          lastError = "Anthropic: " + JSON.stringify(data.error || data).substring(0, 150);
+        }
+      } catch (e: any) { lastError = "Anthropic: " + e.message; }
+    }
 
-      if (!response.ok) {
-        const err = await response.text();
-        throw new Error(`Anthropic: ${response.status} - ${err.substring(0, 200)}`);
-      }
-
-      const data = await response.json();
-      reply = data.content?.[0]?.text || "Keine Antwort.";
-    } else {
-      // Fallback: OpenAI
-      const messages = [
-        { role: "system", content: fullSystemPrompt },
-        ...(history || []).map((m: any) => ({ role: m.role, content: m.content })),
-        { role: "user", content: message },
-      ];
-
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${openaiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages,
-          max_tokens: 2000,
-          temperature: 0.7,
-        }),
-      });
-
-      const data = await response.json();
-      reply = data.choices?.[0]?.message?.content || "Keine Antwort.";
+    if (!reply) {
+      reply = "Die KI konnte aktuell nicht antworten. " + (lastError ? `(${lastError})` : "Bitte stelle sicher dass ein gültiger OPENAI_API_KEY oder ANTHROPIC_API_KEY mit Guthaben hinterlegt ist.");
     }
 
     return new Response(
