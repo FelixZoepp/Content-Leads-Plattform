@@ -1,0 +1,4 @@
+-- M1+M3+M4: Onboarding, Dossier, Format Registry, Metrics, Fulfillment
+-- 19 new tables, all with RLS
+-- Seeds: 15 format specs, 18 metric definitions (5 derived)
+-- Applied to prod: 2026-07-27

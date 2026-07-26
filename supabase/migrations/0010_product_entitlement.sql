@@ -1,0 +1,6 @@
+-- M0: Product & Entitlement Model
+-- See PLAN.md v3 section 2 for full entity descriptions
+-- Tables: products, features, product_features, customer_products, feature_overrides
+-- Core function: has_feature(user_id, feature_slug) -> boolean
+-- Seeds: 4 products, 17 features, product-feature mappings
+-- Applied to prod: 2026-07-27
