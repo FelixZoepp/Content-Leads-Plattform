@@ -48,6 +48,7 @@ const PromptManager = lazy(() => import("./pages/admin/PromptManager"));
 const AuditLogViewer = lazy(() => import("./pages/admin/AuditLogViewer"));
 const AcademyCMS = lazy(() => import("./pages/admin/AcademyCMS"));
 const ProductRegistry = lazy(() => import("./pages/admin/ProductRegistry"));
+const CostDashboard = lazy(() => import("./pages/admin/CostDashboard"));
 const SurveyManager = lazy(() => import("./pages/admin/SurveyManager"));
 const PitchGenerator = lazy(() => import("./pages/admin/PitchGenerator"));
 
@@ -144,6 +145,7 @@ function DashboardRoutes() {
           <Route path="admin/audit-log" element={<AuditLogViewer />} />
           <Route path="admin/academy" element={<AcademyCMS />} />
           <Route path="admin/products" element={<ProductRegistry />} />
+          <Route path="admin/costs" element={<CostDashboard />} />
           <Route path="admin/surveys" element={<SurveyManager />} />
           <Route path="admin/pitch-generator" element={<PitchGenerator />} />
           <Route path="advisor" element={<AdvisorDashboard />} />
