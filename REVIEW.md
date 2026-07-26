@@ -1,18 +1,18 @@
-# REVIEW.md — Bestandsanalyse Content-Leads-Plattform
+# REVIEW.md v3 — Bestandsanalyse gegen Master-Prompt v3
 
-**Datum:** 2026-07-26
+**Datum:** 2026-07-27
 **Repo:** `FelixZoepp/Content-Leads-Plattform`
-**Live:** `https://content-leads-platform.vercel.app`
+**Commit:** `8b94877`
 
 ---
 
 ## Executive Summary
 
-Die Plattform ist ein **Lovable-generiertes Vite-SPA** (React 18 + TypeScript + Tailwind + shadcn/ui), deployed auf Vercel, mit Supabase als Backend (Auth, DB, 57 Edge Functions, Storage). Es existieren **55 Routen**, ~271 Dateien und ~88 DB-Tabellen — aber der Großteil der Outreach/CRM-Features ist **gesperrt** (FeatureGate). Die aktive Consulting-Seite (Dashboard, KPIs, Assets, Reports) funktioniert.
+Die Plattform ist ein **funktionsfähiges Vite-SPA** (React 18 + TS + Tailwind + shadcn + Supabase) mit 90 DB-Tabellen, 57 Edge Functions und ~25 Frontend-Seiten. Sie deckt das **Consulting-Dashboard** (KPIs, Health-Scores, Berater-Workflows, Checklisten) und **KI-Self-Service** (Chat, Tone of Voice, Content Generator, Profiloptimierung) solide ab.
 
-**Kritische Lücken:** Keine Migrationsdateien im Repo (Schema nur in Prod-DB), kein einziger Test, keine CI-Pipeline, keine RLS-Policies sichtbar, kein Audit-Log, doppelter AuthProvider, Prompts inline in Edge Functions, PitchFirst-Branding in E-Mail-Templates noch aktiv. Das Datenmodell hat zwei parallele Multi-Tenancy-Konzepte (`account_id` für CRM, `tenant_id` für Consulting) ohne saubere Trennung.
+**Gegen den v3-Prompt fehlen 26 Kerntabellen und 7 vollständige Module.** Die größten Lücken: kein Produkt-/Entitlement-Modell (Feature-Gating ist hardcoded per `feature_access`-Tabelle), kein Onboarding-Track-System, keine Recording-Pipeline mit Consent, kein Dossier-Konzept, keine Format-Registry, keine Render-Engine, kein Fulfillment/Job-System, keine flexible Metrik-Registry, kein Higgsfield/HeyReach/Perspective-Adapter. Recording existiert (OpenAI Realtime, Whisper), aber **ohne jegliche Einwilligungslogik (§201 StGB Risiko)**.
 
-**Empfehlung:** Fortführen mit gezieltem Refactoring. Neubau wäre unverhältnismäßig — die Grundstruktur (Auth, Supabase-Integration, UI-Components, Edge Functions) ist brauchbar. Aber Fundament (Auth/Rollen/RLS/Audit) muss vor neuen Features gehärtet werden.
+**Empfehlung:** Fundament (Produkt-Modell, Entitlements, Onboarding, Consent) komplett neu bauen. Bestehende Module (Akademie, KI-Bots, Checklisten, KPIs, Admin-Dashboard) als Basis behalten und schrittweise an das neue Entitlement-System anbinden. Content Factory, Render-Engine und Fulfillment sind Neubau.
 
 ---
 
@@ -20,171 +20,168 @@ Die Plattform ist ein **Lovable-generiertes Vite-SPA** (React 18 + TypeScript + 
 
 | Bereich | Technologie | Version |
 |---|---|---|
-| Framework | React (Vite SPA, SWC) | 18.3.1 |
-| Sprache | TypeScript | 5.8.3 |
+| Frontend | React (Vite SPA, SWC) | 18.3.1 |
 | Routing | react-router-dom | 6.30.1 |
-| Styling | Tailwind CSS + shadcn/ui (50 Komponenten) | 3.4.17 |
-| State | React Context (3 Provider), @tanstack/react-query (teilweise) | — |
-| DB/Auth | Supabase (ciimklroqbmzcblnbgdk) | 2.76.1 |
-| Edge Functions | Deno (57 Functions deployed) | — |
-| Hosting | Vercel (SPA rewrite) | — |
+| Styling | Tailwind CSS + shadcn/ui + Gold Design-System | 3.4.17 |
+| State | React Context (Auth, Dashboard, Subscription) | — |
+| Backend | Supabase (ciimklroqbmzcblnbgdk, eu-central-1) | 2.76.1 |
+| Edge Functions | 57 Deno Functions | — |
+| Auth | Supabase Auth (Email/Password) | — |
+| AI | Anthropic Claude + OpenAI (Fallback) + Google Gemini | — |
 | Telefonie | Twilio Voice SDK + sip.js | 2.18.0 |
-| AI | OpenAI (Realtime, Whisper), Anthropic (Chat), Google Gemini (Objections) | — |
-| E-Mail | Resend + Custom SMTP (per Account) | — |
-| Billing | Stripe (Checkout, Portal, Webhooks) | — |
-| Build-Tool | Vite | 5.4.19 |
-| Dev-Relikt | lovable-tagger (devDependency) | 1.1.11 |
-
-### Fehlende Infrastruktur
-- **Tests:** Null. Kein Jest, kein Vitest, kein Playwright, kein Cypress.
-- **CI/CD:** Kein GitHub Actions Workflow. Nur Vercel auto-deploy auf Push.
-- **Linting:** ESLint konfiguriert, aber kein pre-commit Hook.
-- **Migrationen:** Kein `supabase/migrations/` Ordner. Schema existiert nur in der Prod-DB.
-- **Env-Management:** Kein `.env.example`. Variablen nur in Vercel Dashboard + Supabase Secrets.
+| Billing | Stripe | — |
+| Hosting | Vercel SPA | — |
+| DB | PostgreSQL 17, 90 Tabellen, RLS auf ~40 | — |
 
 ---
 
-## Feature-Matrix (Gap-Analyse)
+## Gap-Matrix (v3 Module gegen Bestand)
 
-### A — Fundament (Auth, Rollen, Mandantentrennung, Audit)
-
+### A — Fundament
 | Aspekt | Status | Was existiert | Was fehlt | Qualität | Empfehlung |
 |---|---|---|---|---|---|
-| Auth (E-Mail) | ✅ | Supabase Auth, Login/Register, Password Reset | SSO-Fähigkeit | 3/5 | Fortführen |
-| Rollen | 🟡 | `profiles.role` (client/advisor/admin) + `is_super_admin` | Saubere RBAC-Matrix, Role-Check serverseitig in Edge Functions | 2/5 | Refactoring |
-| Mandantentrennung | 🟡 | Zwei Konzepte: `account_id` (CRM) + `tenant_id` (Consulting) | RLS-Policies, einheitliches Tenant-Modell, serverseitige Scope-Erzwingung | 1/5 | Refactoring (P0) |
-| Audit-Log | ❌ | Nichts | Komplett | — | Neubau |
-| Impersonation | ❌ | Nichts | Komplett | — | Neubau |
-| Einladungs-Flow | 🟡 | `invite-advisor`, `invite-customer`, `invite-team-member` Edge Functions | Einheitlicher Flow, Token-Ablauf-Handling, UI-Feedback | 3/5 | Fortführen |
-| Doppelter AuthProvider | 🟡 | `contexts/AuthContext.tsx` + `hooks/useAuth.tsx` | Konsolidierung auf einen Provider | 2/5 | Refactoring |
+| Auth | ✅ | Supabase Auth, Email/PW, Session | SSO-Fähigkeit | 3/5 | Fortführen |
+| Rollen | 🟡 | profiles.role (admin/advisor/client) + is_super_admin | Saubere RBAC mit Produkt-Bezug | 2/5 | Refactoring |
+| Mandantentrennung | 🟡 | RLS auf ~40 Tabellen, org_id auf profiles | Einheitlicher Scope auf ALLEN Tabellen | 3/5 | Fortführen |
+| Audit-Log | ✅ | audit_log + Trigger auf 5 Tabellen + RPC | Mehr Tabellen triggern | 4/5 | Fortführen |
+| Impersonation | ✅ | SessionStorage-basiert + Banner + Audit | Zeitlimit fehlt | 3/5 | Ergänzen |
 
-### B — Akademie
-
+### B — Einladungen & Zugang
 | Aspekt | Status | Was existiert | Was fehlt | Qualität | Empfehlung |
 |---|---|---|---|---|---|
-| Kurse/Module/Lektionen | 🟡 | Training-Page mit 8 Modulen (Sprint Roadmap) | DB-Schema für Kurse, kein CMS, keine Downloads/Quizze, alles hardcoded im Frontend | 2/5 | Neubau |
-| Fortschritts-Tracking | ❌ | Nichts (MIGRATION_STATUS sagt "noch offen") | Komplett | — | Neubau |
-| Freischaltungslogik | ❌ | Nichts | Komplett | — | Neubau |
-| Admin-CMS | ❌ | Nichts | Komplett | — | Neubau |
-| Berater-Sicht | ❌ | Nichts | Komplett | — | Neubau |
+| Token-System | 🟡 | invitations (uuid token, role, expires_at, used_at) | Produktkontext, Advisor-Zuweisung, Onboarding-Track, atomare Einmal-Einlösung, Rate Limiting, Anti-Enumeration | 2/5 | Neubau |
+| Status-Tracking | ❌ | Nur versendet/eingelöst | versendet→geöffnet→registriert→onboarding→abgeschlossen | — | Neubau |
+| Bulk-CSV | ❌ | Nichts | Vorschau, Validierung, Fehlerbericht | — | Neubau |
+| Erinnerungen | ❌ | Nichts | Auto-Reminder nach n Tagen | — | Neubau |
 
-### C — KI-Bots & Training
-
+### C — Produkt- & Entitlement-Modell
 | Aspekt | Status | Was existiert | Was fehlt | Qualität | Empfehlung |
 |---|---|---|---|---|---|
-| Tone-of-Voice-Profil | ❌ | Nichts | Komplett (Interview-Flow, Profil-Speicherung) | — | Neubau |
-| AI Chat | 🟡 | `ai-chat` Edge Function + `ContentLeadsChat` UI | Prompt-Registry, ToV-Integration, Token-Tracking | 2/5 | Refactoring |
-| Content-Generierung | 🟡 | `generate-asset`, `generate-summary` Edge Functions | Content-Bibliothek, Lead-Posts/Sales-Skripte Unterscheidung | 2/5 | Refactoring |
-| Profiloptimierung (Coaching) | ❌ | Nichts | Komplett | — | Neubau |
-| Prompt-Registry | ❌ | Prompts inline in Edge Functions | Versionierte Prompt-Templates, ohne Deploy änderbar | — | Neubau |
-| Kosten-Tracking | ❌ | Nichts | Token/Kosten pro Kunde | — | Neubau |
-| Realtime AI Training | ✅ | OpenAI WebRTC + Whisper+Gemini Objection Handler | — | 3/5 | Fortführen |
+| Produktdefinition | ❌ | Nichts (kein products/features Modell) | Produkt, Feature, ProduktFeature, KundenProdukt, FeatureOverride | — | **Neubau (P0)** |
+| hasFeature() | 🟡 | useFeatureAccess per account_id+feature(text) — nur in Outreach | Zentrale, serverseitige Funktion für ALLE Module | 1/5 | Neubau |
+| Dynamische Navigation | ❌ | Sidebar hardcoded | Navigation aus Feature-Menge generiert | — | Neubau |
 
-### D — Berater-Workflows
-
+### D — Onboarding-Tracks
 | Aspekt | Status | Was existiert | Was fehlt | Qualität | Empfehlung |
 |---|---|---|---|---|---|
-| Profiloptimierung | ❌ | Nichts | Sektions-basierte Optimierung, Ist/Vorschlag/Status/Freigabe | — | Neubau |
-| Checklisten | ❌ | Nichts | Templates, Instanzen, Abhaken, interne Notizen, Fälligkeiten | — | Neubau |
-| Kundensicht Fortschritt | ❌ | Nichts | Prozentbalken, erledigte Schritte, ohne interne Notizen | — | Neubau |
-| Content-Pipeline | ❌ | Content-Calendar-Page existiert (UI), keine DB-Anbindung | Pipeline-Stages, Kalender, Content-Säulen | 1/5 | Neubau |
-| Berater-Dashboard | 🟡 | `AdvisorDashboard.tsx` (Basic) | Kundenliste, Checklisten-Überblick, Workload | 2/5 | Refactoring |
+| Track-System | ❌ | Nur ein simpler Onboarding-Wizard (3 Schritte) | Tracks als Datenstruktur, Schritt-Typen, Deduplizierung, Vollständigkeits-Gate | — | **Neubau** |
 
-### E — Kennzahlen
-
+### E — Recording-Pipeline → Dossier
 | Aspekt | Status | Was existiert | Was fehlt | Qualität | Empfehlung |
 |---|---|---|---|---|---|
-| Manuelle Erfassung | ✅ | `metrics_snapshot` Tabelle, KPITracking-Page | Erinnerungslogik bei fehlenden Einträgen | 4/5 | Fortführen |
-| Dashboards | ✅ | Kunde/Admin Dashboards mit Recharts | Berater-Sicht auf eigene Kunden, Benchmarks pro Kunde | 3/5 | Fortführen |
-| Zielwerte/Abweichung | 🟡 | `benchmarks` Tabelle existiert | UI zur Zielwert-Eingabe, Abweichungsanzeige | 3/5 | Fortführen |
-| API-Sync | 🟡 | `sync-sheet`, `sync-all-tables`, `sync-contacts-external` | Quelle-Markierung pro Datenpunkt, kein stilles Überschreiben | 2/5 | Refactoring |
+| Recording | 🟡 | OpenAI Realtime (WebRTC), Whisper Transcription | **KEINE EINWILLIGUNG** (§201 StGB Risiko), keine Löschfunktion | 1/5 | **Refactoring (P0)** |
+| Dossier | ❌ | Nichts (kein strukturiertes Kundenwissens-Modell) | Fragen-Schema, Extraktion, Konflikt/Lücken-Bericht, Versionierung, Freigabe-Gate | — | **Neubau** |
 
-### F — Integrationen (API-Keys)
-
+### F — Akademie
 | Aspekt | Status | Was existiert | Was fehlt | Qualität | Empfehlung |
 |---|---|---|---|---|---|
-| Key-Verwaltung | 🟡 | `api_keys` Tabelle (hash-basiert), `account_integrations` | Envelope Encryption, Keys nie im Klartext im Log | 2/5 | Refactoring |
-| Twilio | ✅ | Voll integriert (Voice SDK, Token, Webhooks) | — | 4/5 | Fortführen |
-| SMTP | ✅ | Custom SMTP pro Account | — | 3/5 | Fortführen |
-| HeyReach | ❌ | Nicht referenziert im Code | Komplett | — | Neubau |
-| Sync-Jobs | 🟡 | Google Sheets Sync, External Supabase Sync | Zeitplan, Backoff, Fehler-Historie, Status-UI | 2/5 | Refactoring |
-| Verbindungstest | ❌ | Nichts | Test beim Speichern, Statusanzeige | — | Neubau |
+| Kurse/Lektionen | ✅ | courses, lessons, lesson_progress + RLS + UI | Feature-basierte Freischaltung (statt nur is_published) | 4/5 | Ergänzen |
+| Admin-CMS | ✅ | AcademyCMS mit CRUD, Reihenfolge, Publish | — | 4/5 | Fortführen |
+| Fortschritt | ✅ | lesson_progress + Sequential Unlock | Signal an AI Concierge | 4/5 | Fortführen |
 
-### G — Zufriedenheitsreports
-
+### G — KI-Bots
 | Aspekt | Status | Was existiert | Was fehlt | Qualität | Empfehlung |
 |---|---|---|---|---|---|
-| Umfrage-Templates | ❌ | Nichts | NPS + offene Fragen + Modulbewertungen | — | Neubau |
-| CSAT-Erfassung | 🟡 | `csat_responses` Tabelle, `CSATPage` | Versand per E-Mail, Erinnerungen, Antwortquote | 2/5 | Refactoring |
-| KI-Auswertung | ❌ | Nichts | Sentiment, Themen-Tags, Trendanalyse | — | Neubau |
+| Bot-Framework | ✅ | BotChat.tsx mit 5 Bot-Typen, bot_sessions, generated_content | Token-/Kostenzählung pro KUNDE (nur global in ai_usage_log) | 3/5 | Ergänzen |
+| Tone of Voice | ✅ | Interview-Bot + tone_of_voice_profiles | Integration als Dossier-Baustein | 4/5 | Ergänzen |
+| Content-Generator | ✅ | Lead-Posts, Content-Posts, Sales-Skripte | Anti-Wiederholung (letzte N Posts als Negativkontext) | 3/5 | Ergänzen |
+| Profiloptimierung | ✅ | ProfileOptimizerPage mit Zeichenlimits | Dossier-Integration, Format-Registry-Integration | 4/5 | Ergänzen |
+| Prompt-Registry | ✅ | prompt_templates + Versioning + 8 Seeds + Admin-UI | Diff-Ansicht in Admin | 4/5 | Fortführen |
 
-### H — AI Concierge & Revenue Intelligence
-
+### H — Berater-Workflows
 | Aspekt | Status | Was existiert | Was fehlt | Qualität | Empfehlung |
 |---|---|---|---|---|---|
-| Gesundheitsstatus | ✅ | `health_scores` + `calculate-health` Edge Function | Begründung mit verlinkten Datenpunkten | 3/5 | Fortführen |
-| Alerts | ✅ | `alerts` Tabelle (no_posts, low_leads, etc.) | UI-Integration, Push/E-Mail | 3/5 | Fortführen |
-| AI Summaries | 🟡 | `ai_summaries` Tabelle + `generate-summary` | Portfolio-übergreifende Analyse, Upsell-Signale | 2/5 | Refactoring |
-| Upsell-Signale | ❌ | Nichts | Erkennung, Aufhänger, Gegenanzeige | — | Neubau |
-| Pitch-Nachrichten | ❌ | Nichts | Datenpunkt-basierte Gesprächsaufhänger | — | Neubau |
+| Profiloptimierung | ✅ | profile_optimizations + profile_sections + RLS | Kundenfreigabe-UI, Dossier-Anbindung | 3/5 | Ergänzen |
+| Checklisten | ✅ | Templates + Instanzen + Abhaken + interne Notizen | Feature-basierte Templates pro Produkt | 4/5 | Ergänzen |
+| Content-Pipeline | ✅ | content_plans + content_items + Kalender | Batch-Review-UI, Sammelfreigabe, Cron-Integration | 3/5 | Ergänzen |
 
-### I — Admin-Cockpit
-
+### I — Content Factory
 | Aspekt | Status | Was existiert | Was fehlt | Qualität | Empfehlung |
 |---|---|---|---|---|---|
-| Kundenliste | 🟡 | `AdminDashboard.tsx` mit Liste | Health/Status/Berater/Paket Spalten | 2/5 | Refactoring |
-| Beraterauslastung | ❌ | Nichts | Komplett | — | Neubau |
-| Umsatzübersicht | 🟡 | `admin-stripe-stats` Edge Function | UI-Integration, Trends | 2/5 | Refactoring |
-| Feature-Flags | 🟡 | `feature_access` Tabelle | Admin-UI zur Verwaltung | 2/5 | Fortführen |
-| Prompt-Verwaltung | ❌ | Nichts | Komplett | — | Neubau |
-| Systemlogs | ❌ | Nichts | Komplett | — | Neubau |
+| 1-Klick-Generierung | ❌ | Nichts | Deliverable Sets, parallele Jobs, Varianten, Entwurf-Status | — | **Neubau** |
+| Higgsfield | ❌ | Kein Code, kein Adapter | API-Integration, Visual-Presets, Kosten-Tracking, Fallback | — | **Neubau** |
+| Perspective | ❌ | Nur ein FunnelBuilder-Stub (Outreach, gesperrt) | Funnel-Briefing-Generator, manual-Adapter, Status-Tracking | — | **Neubau** |
+| Wöchentlicher Cron | ❌ | Nichts | Batch-Generierung, Idempotenz, Anti-Wiederholung, Berater-Notification | — | **Neubau** |
+| Chat-Revision | ❌ | Nichts | Chat an Entwurf, Versionierung, Rollback | — | **Neubau** |
+
+### J — Format-Registry, Asset-Bibliothek & Render-Engine
+| Aspekt | Status | Was existiert | Was fehlt | Qualität | Empfehlung |
+|---|---|---|---|---|---|
+| Format-Registry | ❌ | Zeichenlimits in ProfileOptimizerPage hardcoded | Zentrale Registry, Safe Zones, Dreifach-Vorschau | — | **Neubau** |
+| Brand-Tokens | ❌ | Nichts | Farben, Fonts, Logo, Bildstil pro Kunde | — | **Neubau** |
+| Render-Engine | ❌ | Nichts | 3-Schicht (LLM → Bild → Compositing), HTML/SVG Templates | — | **Neubau** |
+
+### K — 1-Klick-Fulfillment
+| Aspekt | Status | Was existiert | Was fehlt | Qualität | Empfehlung |
+|---|---|---|---|---|---|
+| Komplett | ❌ | Nichts | Deliverable Sets, Aufträge, Teiljobs, Review-Queue, Export | — | **Neubau** |
+
+### L — Kennzahlen
+| Aspekt | Status | Was existiert | Was fehlt | Qualität | Empfehlung |
+|---|---|---|---|---|---|
+| Erfassung | 🟡 | metrics_snapshot (Perioden-basiert), KPITrackingPage, Dashboard-Widgets | **Tagesauflösung**, Metrik-Registry, Nulltag, source pro Datenpunkt, mobil-optimierte Eingabe | 2/5 | **Neubau des Erfassungsmodells** |
+| HeyReach-Sync | ❌ | Kein Code | API-Adapter, Sync-Job, Konflikterkennung | — | Neubau |
+| Dashboards | ✅ | Kunde/Berater/Admin Dashboards mit Recharts | Benchmarks aus Metrik-Registry | 3/5 | Ergänzen |
+
+### M — Zufriedenheitsreports
+| Aspekt | Status | Was existiert | Was fehlt | Qualität | Empfehlung |
+|---|---|---|---|---|---|
+| Umfragen | 🟡 | surveys + survey_response_entries + SurveyManager-UI | Versand-System, Token-Link, Frequenz-Sperre, Anonymitätskonzept | 2/5 | Ergänzen |
+| KI-Auswertung | 🟡 | "KI-Analyse starten" Button in SurveyManager | Sofort-Alarm bei kritischer Antwort, aggregierte Trends | 2/5 | Ergänzen |
+
+### N — AI Concierge & Revenue Intelligence
+| Aspekt | Status | Was existiert | Was fehlt | Qualität | Empfehlung |
+|---|---|---|---|---|---|
+| Health-Score | ✅ | health_scores + calculate-health Edge Function | Kennzahlen-Erfassungsquote als Signal | 3/5 | Ergänzen |
+| AI Insights | ✅ | ai_insights + source_refs (jsonb) | Mehr Signalquellen, Sofort-Alarm | 3/5 | Ergänzen |
+| Upsell-Signale | ✅ | upsell_signals + PitchGenerator-UI | Produktbezug (welches Angebot passt) | 3/5 | Ergänzen |
+
+### O — Admin-Cockpit
+| Aspekt | Status | Was existiert | Was fehlt | Qualität | Empfehlung |
+|---|---|---|---|---|---|
+| Übersicht | ✅ | AdminDashboard mit Health/Revenue/Workload Widgets | Produktfilter, Feature-Flags-UI | 3/5 | Ergänzen |
+| Registries | 🟡 | Prompt-Registry UI | Metrik-Registry, Format-Registry, Deliverable Sets, Onboarding-Tracks | 2/5 | Neubau |
+| Job-Monitor | ❌ | Nichts | Queue-Ansicht, Fehlerlog, manueller Neustart | — | Neubau |
+| Kosten | ❌ | ai_usage_log existiert, keine UI pro Kunde/Monat | Kosten-Dashboard mit Limits | — | Neubau |
+
+### P — AI Hunter System
+| Aspekt | Status | Empfehlung |
+|---|---|---|
+| Nicht spezifiziert | ❌ | Produkt-Datensatz anlegen, leerer Onboarding-Track, Rückfragen in ASSUMPTIONS.md |
+
+### Q — Integrationen
+| Provider | Status | Was existiert | Was fehlt |
+|---|---|---|---|
+| HeyReach | ❌ | Nur Label in KPI-Source-Badge | API-Adapter, Sync-Job, Credential-Handling |
+| Higgsfield | ❌ | Nichts | API-Adapter, Visual-Presets, Job-Polling, Kosten-Tracking |
+| Perspective | ❌ | FunnelBuilder-Stub (gesperrt) | manual-Adapter, Funnel-Briefing-Generator |
+| Twilio | ✅ | Voll integriert | — |
+| Stripe | ✅ | Edge Functions für Checkout/Portal | Produktbezogene Abrechnung |
+| Supabase Vault | ✅ | store/get/delete_credential RPCs | UI für Credential-Verwaltung |
 
 ---
 
 ## Risiko- & Schuldenbericht
 
-### P0 — Blockiert alles
-
-1. **Keine RLS-Policies / Mandantentrennung nicht erzwungen.** Jeder authentifizierte User kann theoretisch über den Supabase Client auf alle Daten zugreifen. `account_id`/`tenant_id` Scope wird nur im Frontend geprüft, nicht serverseitig. → **IDOR-Risiko.**
-2. **Keine Migrationsdateien.** Schema existiert nur in Prod-DB. Kein reproduzierbarer DB-Aufbau, kein Review von Schema-Änderungen, kein Rollback möglich.
-3. **Zwei parallele Multi-Tenancy-Konzepte** (`account_id` für CRM, `tenant_id` für Consulting) ohne klare Beziehung. Muss vor jedem neuen Feature konsolidiert werden.
+### P0 — Muss vor allem anderen behoben werden
+1. **Recording ohne Einwilligung (§201 StGB).** `RealtimeAudio.ts` startet Aufnahme ohne Consent-Gate. Strafrechtliches Risiko.
+2. **Kein Produkt-/Entitlement-Modell.** Navigation und Feature-Zugang sind hardcoded. Ein neues Produkt erfordert Code-Änderungen.
+3. **Kein Dossier-Konzept.** Generierung basiert auf ad-hoc Kontext statt strukturiertem, freigegebenem Kundenwissen.
 
 ### P1 — Sicherheitsrelevant
-
-4. **API-Keys in `account_integrations` möglicherweise im Klartext.** `smtp_password_encrypted` Name suggeriert Verschlüsselung, aber kein Encryption-Layer im Code sichtbar. Twilio-Credentials ebenfalls direkt in der Tabelle.
-5. **Doppelter AuthProvider** — Race Conditions möglich, unklare Source of Truth für Auth-State.
-6. **Prompts inline in Edge Functions** — Prompt Injection über Kundendaten nicht systematisch geschützt. Kein Trennung Instruktion/Daten.
-7. **Login-Credentials in MIGRATION_STATUS.md committed** (felix@content-leads.de + Passwort im Klartext in Git-History).
-8. **PitchFirst-Branding in E-Mail-Templates** — Kunden erhalten möglicherweise E-Mails mit falschem Brand.
+4. **Invitation Tokens nicht atomar einlösbar** — Race Condition möglich (used_at UPDATE ohne Lock).
+5. **Impersonation ohne Zeitlimit** — Admin bleibt unbegrenzt als Kunde eingeloggt.
+6. **Passwort in Git-History** (MIGRATION_STATUS.md) — noch nicht rotiert.
+7. **Kein Rate Limiting** auf Einladungs- und Auth-Endpoints.
 
 ### P2 — Architektur
+8. **Keine Job-Infrastruktur.** Kein Queue-System für Hintergrund-Jobs (Bildgenerierung, Sync, Cron).
+9. **Format-Vorgaben verstreut.** LinkedIn-Zeichenlimits in ProfileOptimizerPage hardcoded statt zentral.
+10. **Keine Render-Engine.** Kein Konzept für deterministische Asset-Erzeugung (Text + Bild → fertiges Visual).
+11. **metrics_snapshot nicht tagesfähig** — period_type unterstützt zwar "daily", aber kein Nulltag-Konzept, keine Source-Spalte, keine Metrik-Registry.
 
-9. **Kein Service-Layer** — alle Supabase-Calls direkt aus Components. Kein zentralisierter Fehler-/Loading-Handling.
-10. **Kein AI-Service-Layer** — drei verschiedene AI-Integrationen (OpenAI, Anthropic, Gemini) ohne zentrale Abstraktion, kein Retry/Fallback, kein Cost-Tracking.
-11. **Kein Test-Setup** — null Tests, null Coverage, null CI.
-12. **~75 Page-Dateien, davon ~40 nicht erreichbar** (Outreach-Seiten gesperrt aber Code vorhanden) — Dead Code, erhöht Wartungsaufwand.
-13. **SubscriptionContext ist ein Stub** (`tier: "pro"`, `isActive: true` hardcoded) — echte Stripe-Logik nur in `useSubscription` Hook.
-
-### P3 — Kosmetisch / Tech Debt
-
-14. **lovable-tagger als devDependency** — kann entfernt werden.
-15. **README.md ist der Vite-Template-Default** — keine projektspezifische Dokumentation.
-16. **Inconsistente Naming** — `CashflowDashboard` vs `FinancePage`, `TodayPage` vs `DailyChecklist`.
-17. **Hardcoded deutsche Texte** verstreut in Components statt zentral gepflegt.
-18. **Keine Responsive/Mobile Layouts** (lt. MIGRATION_STATUS.md offen).
-
----
-
-## Empfehlung pro Modul
-
-| Modul | Empfehlung | Begründung |
-|---|---|---|
-| A Fundament | **Refactoring (P0)** | Auth-Basis da, aber RLS/Audit/Tenant-Konsolidierung zwingend vor allem anderen |
-| B Akademie | **Neubau** | Nur hardcoded UI, kein DB-Schema — Refactoring spart nichts |
-| C KI-Bots | **Neubau + Teilübernahme** | AI-Chat und Realtime-Training übernehmen, Rest (ToV, Prompt-Registry, Bibliothek) neu |
-| D Berater-Workflows | **Neubau** | Advisor-Dashboard als Shell übernehmen, alle Workflows komplett neu |
-| E Kennzahlen | **Fortführen** | Solide Basis (metrics_snapshot, Dashboards), nur ergänzen |
-| F Integrationen | **Refactoring** | Twilio/SMTP da, Encryption-Layer + HeyReach + Verbindungstest ergänzen |
-| G Zufriedenheit | **Neubau** | Nur CSAT-Tabelle existiert, alles andere fehlt |
-| H AI Concierge | **Refactoring + Ergänzung** | Health-Scores und Alerts da, Upsell/Pitch/Verlinkung fehlt |
-| I Admin-Cockpit | **Refactoring** | Grundstruktur da, muss um Prompt-Verwaltung, Logs, Auslastung erweitert werden |
+### P3 — Tech Debt
+12. **~40 gesperrte Outreach-Seiten** als Dead Code im Bundle.
+13. **SubscriptionContext ist ein Stub** (hardcoded `tier: "pro"`).
+14. **Keine Tests, keine CI.**
+15. **Dual-Tenant-Modell** (accounts + tenants + organisations) — drei Tabellen für ein Konzept.
