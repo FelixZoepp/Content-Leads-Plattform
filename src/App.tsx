@@ -43,14 +43,18 @@ const SetPassword = lazy(() => import("./pages/SetPassword"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdvisorDashboard = lazy(() => import("./pages/AdvisorDashboard"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const AdvisorKPIPage = lazy(() => import("./pages/advisor/AdvisorKPIPage"));
 const PromptManager = lazy(() => import("./pages/admin/PromptManager"));
 const AuditLogViewer = lazy(() => import("./pages/admin/AuditLogViewer"));
 const AcademyCMS = lazy(() => import("./pages/admin/AcademyCMS"));
+const SurveyManager = lazy(() => import("./pages/admin/SurveyManager"));
+const PitchGenerator = lazy(() => import("./pages/admin/PitchGenerator"));
 
 // AI Tools
 const ToneOfVoicePage = lazy(() => import("./pages/ai/ToneOfVoicePage"));
 const ContentGeneratorPage = lazy(() => import("./pages/ai/ContentGeneratorPage"));
 const ContentLibraryPage = lazy(() => import("./pages/ai/ContentLibraryPage"));
+const ProfileOptimizerPage = lazy(() => import("./pages/ai/ProfileOptimizerPage"));
 
 // Outreach — locked until July 2025
 const OutreachLocked = lazy(() => import("./pages/OutreachLocked"));
@@ -130,13 +134,17 @@ function DashboardRoutes() {
           <Route path="ai/tone-of-voice" element={<ToneOfVoicePage />} />
           <Route path="ai/content-generator" element={<ContentGeneratorPage />} />
           <Route path="ai/library" element={<ContentLibraryPage />} />
+          <Route path="ai/profile-optimizer" element={<ProfileOptimizerPage />} />
 
           {/* Admin */}
           <Route path="admin" element={<AdminDashboard />} />
           <Route path="admin/prompts" element={<PromptManager />} />
           <Route path="admin/audit-log" element={<AuditLogViewer />} />
           <Route path="admin/academy" element={<AcademyCMS />} />
+          <Route path="admin/surveys" element={<SurveyManager />} />
+          <Route path="admin/pitch-generator" element={<PitchGenerator />} />
           <Route path="advisor" element={<AdvisorDashboard />} />
+          <Route path="advisor/kpis" element={<AdvisorKPIPage />} />
           <Route path="settings" element={<Settings />} />
           <Route path="support" element={<Support />} />
         </Routes>

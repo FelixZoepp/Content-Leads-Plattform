@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Users, TrendingUp, AlertTriangle, Plus, RefreshCw,
   ChevronRight, Activity, UserPlus, Mail, Shield, UserCheck, X,
-  FileText, ScrollText, BookOpen
+  FileText, ScrollText, BookOpen, Eye
 } from "lucide-react";
 
 interface Advisor {
@@ -15,6 +16,7 @@ interface Advisor {
 
 interface Tenant {
   id: string;
+  user_id: string;
   company_name: string;
   contact_name: string;
   is_active: boolean;
@@ -38,6 +40,7 @@ function HealthBadge({ color, score }: { color: string; score: number }) {
 
 export default function AdminDashboard() {
   const nav = useNavigate();
+  const { startImpersonation } = useAuth();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
@@ -62,7 +65,7 @@ export default function AdminDashboard() {
     try {
       const { data: tenantsData } = await supabase
         .from("tenants")
-        .select("*, health_scores(score, color, created_at)")
+        .select("id, user_id, company_name, contact_name, is_active, created_at, advisor_id, health_scores(score, color, created_at)")
         .eq("is_active", true)
         .order("company_name");
 
@@ -392,7 +395,16 @@ export default function AdminDashboard() {
                       {new Date(tenant.created_at).toLocaleDateString("de-DE")}
                     </td>
                     <td className="px-5 py-3 text-right">
-                      <ChevronRight className="w-4 h-4 text-[rgba(249,249,249,0.2)] inline" />
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); startImpersonation(tenant.user_id); }}
+                          title="Als Kunde einloggen"
+                          className="p-1.5 rounded-lg text-[rgba(249,249,249,0.3)] hover:text-[#E9CB8B] hover:bg-[rgba(197,160,89,0.08)] border border-transparent hover:border-[rgba(197,160,89,0.2)] transition"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                        </button>
+                        <ChevronRight className="w-4 h-4 text-[rgba(249,249,249,0.2)]" />
+                      </div>
                     </td>
                   </tr>
                 ))}

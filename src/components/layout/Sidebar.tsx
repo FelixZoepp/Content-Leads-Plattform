@@ -5,7 +5,7 @@ import {
   FileText, PenTool, BarChart3, DollarSign, Bot,
   GraduationCap, MessageCircle, Video, Settings, HelpCircle,
   Shield, Target, LineChart, Zap, Package, GitCompare, ClipboardList, UserCheck,
-  Mic, Wand2, Library
+  Mic, Wand2, Library, Linkedin, TrendingUp
 } from "lucide-react";
 
 export function Sidebar() {
@@ -94,6 +94,7 @@ export function Sidebar() {
           <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[rgba(249,249,249,0.3)]">KI-Tools</span>
         </div>
         <SidebarItem icon={<Mic className="w-5 h-5" />} label="Tone of Voice" path="/dashboard/ai/tone-of-voice" />
+        <SidebarItem icon={<Linkedin className="w-5 h-5" />} label="Profil-Optimizer" path="/dashboard/ai/profile-optimizer" />
         <SidebarItem icon={<Wand2 className="w-5 h-5" />} label="Content Generator" path="/dashboard/ai/content-generator" />
         <SidebarItem icon={<Library className="w-5 h-5" />} label="Bibliothek" path="/dashboard/ai/library" />
 
@@ -109,11 +110,13 @@ export function Sidebar() {
         {userRole === "advisor" && (
           <div className="mb-2">
             <SidebarItem icon={<UserCheck className="w-5 h-5" />} label="Meine Kunden" path="/dashboard/advisor" />
+            <SidebarItem icon={<TrendingUp className="w-5 h-5" />} label="Kunden-KPIs" path="/dashboard/advisor/kpis" />
           </div>
         )}
         {userRole === "admin" && (
           <div className="mb-2">
             <SidebarItem icon={<UserCheck className="w-5 h-5" />} label="Berater-View" path="/dashboard/advisor" />
+            <SidebarItem icon={<TrendingUp className="w-5 h-5" />} label="Kunden-KPIs" path="/dashboard/advisor/kpis" />
             <SidebarItem icon={<Shield className="w-5 h-5" />} label="Admin" path="/dashboard/admin" />
           </div>
         )}

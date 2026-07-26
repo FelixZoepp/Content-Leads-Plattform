@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { ServiceProgress } from "@/components/customer/ServiceProgress";
+import { KPIReminderBanner } from "@/components/dashboard/KPIReminderBanner";
 import {
   BookOpen, Users, MessageSquare, CalendarDays, Video, ArrowRight,
   CheckCircle2, X, Pin, Send, Mail, Phone, TrendingUp, DollarSign,
@@ -231,6 +232,9 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 max-w-6xl">
+
+      {/* ── KPI Erinnerungs-Banner ── */}
+      <KPIReminderBanner />
 
       {/* ── Service Progress (Berater-Fortschritt) ── */}
       <ServiceProgress />
