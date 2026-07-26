@@ -1,42 +1,37 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "./useAuth";
+/**
+ * useFeatureAccess — compatibility shim over useHasFeature.
+ *
+ * Legacy callers used it in two ways:
+ *   1. const { hasAccess, loading } = useFeatureAccess("some.feature")
+ *   2. const { isStarterPlan, isProPlan, canUsePowerDialer, ... } = useFeatureAccess()
+ *
+ * The tier/plan properties were never implemented in the DB layer.
+ * They all default to `false` so gated pages show the UpgradePrompt
+ * instead of crashing. A real per-feature check uses useHasFeature().
+ */
+import { useHasFeature } from "./useHasFeature";
 
-export function useFeatureAccess(feature: string) {
-  const [hasAccess, setHasAccess] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+export function useFeatureAccess(feature?: string) {
+  const { hasFeature, loading } = useHasFeature(feature);
 
-  useEffect(() => {
-    if (!user) { setLoading(false); return; }
+  return {
+    // Legacy single-feature API
+    hasAccess: hasFeature,
+    loading,
 
-    async function check() {
-      try {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("account_id")
-          .eq("id", user!.id)
-          .single();
+    // Tier properties — all false (no tier model in DB anymore).
+    // Pages using these should migrate to useHasFeature("specific.slug").
+    isStarterPlan: false,
+    isProPlan: false,
+    isScalePlan: false,
+    subscribed: false,
+    currentTier: null as string | null,
 
-        if (!profile?.account_id) { setLoading(false); return; }
-
-        const { data } = await supabase
-          .from("feature_access")
-          .select("is_active")
-          .eq("account_id", profile.account_id)
-          .eq("feature", feature)
-          .single();
-
-        setHasAccess(data?.is_active ?? false);
-      } catch {
-        setHasAccess(false);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    check();
-  }, [user, feature]);
-
-  return { hasAccess, loading };
+    // Named feature gates — default false so gated pages show UpgradePrompt.
+    canUsePowerDialer: false,
+    canUseObjectionLibrary: false,
+    canUseEmailTemplates: false,
+    canUseCallSummary: false,
+    canUseTeamManagement: false,
+  };
 }

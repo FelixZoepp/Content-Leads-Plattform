@@ -55,6 +55,7 @@ const ToneOfVoicePage = lazy(() => import("./pages/ai/ToneOfVoicePage"));
 const ContentGeneratorPage = lazy(() => import("./pages/ai/ContentGeneratorPage"));
 const ContentLibraryPage = lazy(() => import("./pages/ai/ContentLibraryPage"));
 const ProfileOptimizerPage = lazy(() => import("./pages/ai/ProfileOptimizerPage"));
+const DailyInputPage = lazy(() => import("./pages/metrics/DailyInputPage"));
 
 // Outreach — locked until July 2025
 const OutreachLocked = lazy(() => import("./pages/OutreachLocked"));
@@ -145,6 +146,7 @@ function DashboardRoutes() {
           <Route path="admin/pitch-generator" element={<PitchGenerator />} />
           <Route path="advisor" element={<AdvisorDashboard />} />
           <Route path="advisor/kpis" element={<AdvisorKPIPage />} />
+          <Route path="metrics/daily" element={<DailyInputPage />} />
           <Route path="settings" element={<Settings />} />
           <Route path="support" element={<Support />} />
         </Routes>

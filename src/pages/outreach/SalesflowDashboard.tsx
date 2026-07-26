@@ -57,7 +57,7 @@ interface Campaign {
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { isStarterPlan, isProPlan, loading: featureLoading } = useFeatureAccess();
+  const { isStarterPlan, loading: featureLoading } = useFeatureAccess();
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(true);
   const [leadStats, setLeadStats] = useState<LeadStats>({
     totalCampaigns: 0,
