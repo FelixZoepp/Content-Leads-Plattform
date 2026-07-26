@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { AdvisorWorkloadWidget } from "@/components/admin/AdvisorWorkloadWidget";
+import { RevenueWidget } from "@/components/admin/RevenueWidget";
 import {
   Users, TrendingUp, AlertTriangle, Plus, RefreshCw,
   ChevronRight, Activity, UserPlus, Mail, Shield, UserCheck, X,
@@ -357,6 +359,12 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* Revenue + Workload Widgets */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <RevenueWidget />
+        <AdvisorWorkloadWidget />
+      </div>
 
       {/* Customer List */}
       <div className="glass-panel fade-up" style={{ animationDelay: "420ms", padding: 0 }}>
