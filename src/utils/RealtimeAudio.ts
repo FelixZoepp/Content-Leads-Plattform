@@ -77,10 +77,15 @@ export class RealtimeChat {
     this.audioEl.autoplay = true;
   }
 
-  async init(systemPrompt?: string) {
+  async init(systemPrompt?: string, consentGiven: boolean = false) {
+    // §201 StGB: Recording without consent is a criminal offense in Germany
+    if (!consentGiven) {
+      throw new Error("Aufnahme ohne Einwilligung nicht erlaubt. Bitte zuerst die Einwilligung aller Gesprächsteilnehmer einholen.");
+    }
+
     try {
-      console.log("Initializing WebRTC connection...");
-      
+      console.log("Initializing WebRTC connection (consent given)...");
+
       // Get ephemeral token from our Supabase Edge Function
       const { data: tokenData, error: tokenError } = await supabase.functions.invoke("realtime-session", {
         body: { systemPrompt }

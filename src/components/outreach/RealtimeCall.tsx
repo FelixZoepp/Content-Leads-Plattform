@@ -115,7 +115,9 @@ const RealtimeCall: React.FC<RealtimeCallProps> = ({
       const defaultPrompt = `Du führst ein professionelles Verkaufsgespräch mit ${contactName}. Sei freundlich, höre aufmerksam zu und stelle relevante Fragen, um den Bedarf zu verstehen.`;
       
       chatRef.current = new RealtimeChat(handleMessage, handleError);
-      await chatRef.current.init(systemPrompt || defaultPrompt);
+      // consentGiven=true here because the ConsentGate component must be shown
+      // BEFORE this function is called. The caller is responsible for consent.
+      await chatRef.current.init(systemPrompt || defaultPrompt, true);
       
       // Start AI Trainer for objection detection
       const systemContext = systemPrompt || defaultPrompt;

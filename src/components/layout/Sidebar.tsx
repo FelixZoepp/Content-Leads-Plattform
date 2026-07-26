@@ -1,17 +1,41 @@
 import { SidebarItem } from "./SidebarItem";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserFeatures } from "@/hooks/useHasFeature";
+import { navigationConfig } from "@/lib/navigationConfig";
 import {
   LayoutDashboard, CalendarDays, Radio,
   FileText, PenTool, BarChart3, DollarSign, Bot,
   GraduationCap, MessageCircle, Video, Settings, HelpCircle,
   Shield, Target, LineChart, Zap, Package, GitCompare, ClipboardList, UserCheck,
-  Mic, Wand2, Library, Linkedin, TrendingUp
+  Mic, Wand2, Library, Linkedin, TrendingUp,
+  type LucideIcon,
 } from "lucide-react";
+
+// Map icon name strings (from navigationConfig) to actual components.
+const ICON_MAP: Record<string, LucideIcon> = {
+  LayoutDashboard, CalendarDays, Radio,
+  FileText, PenTool, BarChart3, DollarSign, Bot,
+  GraduationCap, MessageCircle, Video,
+  Shield, Target, LineChart, Zap, Package, GitCompare, ClipboardList, UserCheck,
+  Mic, Wand2, Library, Linkedin, TrendingUp,
+};
 
 export function Sidebar() {
   const { userRole, user } = useAuth();
+  const { features, loading: featuresLoading } = useUserFeatures();
+  const isAdmin = userRole === "admin" || userRole === "super_admin";
+
   const name = user?.user_metadata?.name || "Felix Zoepp";
   const initials = name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 1);
+
+  // Determine if a nav item should be visible.
+  // Items without a featureSlug are always shown.
+  // Items with a featureSlug are shown only for admins or users who have that feature.
+  const isVisible = (featureSlug?: string) => {
+    if (!featureSlug) return true;
+    if (isAdmin) return true;
+    return features.has(featureSlug);
+  };
 
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-[240px] glass-sidebar flex flex-col z-50">
@@ -43,66 +67,42 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-4 py-5 space-y-1">
-        {/* COCKPIT */}
-        <div className="pb-2 px-3">
-          <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[rgba(249,249,249,0.3)]">Cockpit</span>
-        </div>
-        <SidebarItem icon={<LayoutDashboard className="w-5 h-5" />} label="Dashboard" path="/dashboard" />
-        <SidebarItem icon={<CalendarDays className="w-5 h-5" />} label="Calendar" path="/dashboard/calendar" />
-
-        {/* OUTREACH — locked, not expandable */}
-        <div className="pt-5 pb-2 px-3">
-          <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[rgba(249,249,249,0.3)]">Outreach</span>
-        </div>
-        <SidebarItem icon={<Radio className="w-5 h-5" />} label="Outreach" path="/dashboard/outreach/dashboard" locked />
-        <SidebarItem icon={<Zap className="w-5 h-5" />} label="Sales Tools" path="/dashboard/outreach/scripts" locked />
-
-        {/* CONTENT — eigene Sektion */}
-        <div className="pt-5 pb-2 px-3">
-          <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[rgba(249,249,249,0.3)]">Content</span>
-        </div>
-        <SidebarItem icon={<FileText className="w-5 h-5" />} label="Management" path="/dashboard/content/management" locked />
-        <SidebarItem icon={<PenTool className="w-5 h-5" />} label="Post Generator" path="/dashboard/content/generator" locked />
-        <SidebarItem icon={<BarChart3 className="w-5 h-5" />} label="Analytics" path="/dashboard/content/analytics" locked />
-
-        {/* PLAYBOOK */}
-        <div className="pt-5 pb-2 px-3">
-          <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[rgba(249,249,249,0.3)]">Playbook</span>
-        </div>
-        <SidebarItem icon={<Package className="w-5 h-5" />} label="Alle Assets" path="/dashboard/assets" />
-        <SidebarItem icon={<GitCompare className="w-5 h-5" />} label="KPI-Vergleich" path="/dashboard/kpi-comparison" />
-        <SidebarItem icon={<ClipboardList className="w-5 h-5" />} label="Client Report" path="/dashboard/client-report" />
-
-        {/* STUDIO */}
-        <div className="pt-5 pb-2 px-3">
-          <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[rgba(249,249,249,0.3)]">Studio</span>
-        </div>
-        <SidebarItem icon={<DollarSign className="w-5 h-5" />} label="Finance" path="/dashboard/finance" />
-        <SidebarItem icon={<Target className="w-5 h-5" />} label="KPIs" path="/dashboard/kpis" />
-        <SidebarItem icon={<LineChart className="w-5 h-5" />} label="Reports" path="/dashboard/reports" />
-
-        {/* LERNEN */}
-        <div className="pt-5 pb-2 px-3">
-          <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[rgba(249,249,249,0.3)]">Lernen</span>
-        </div>
-        <SidebarItem icon={<GraduationCap className="w-5 h-5" />} label="Training" path="/dashboard/training" />
-        <SidebarItem icon={<MessageCircle className="w-5 h-5" />} label="Community" path="/dashboard/community" />
-        <SidebarItem icon={<Video className="w-5 h-5" />} label="Live-Übungen" path="/dashboard/live" locked />
-
-        {/* KI-TOOLS */}
-        <div className="pt-5 pb-2 px-3">
-          <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[rgba(249,249,249,0.3)]">KI-Tools</span>
-        </div>
-        <SidebarItem icon={<Mic className="w-5 h-5" />} label="Tone of Voice" path="/dashboard/ai/tone-of-voice" />
-        <SidebarItem icon={<Linkedin className="w-5 h-5" />} label="Profil-Optimizer" path="/dashboard/ai/profile-optimizer" />
-        <SidebarItem icon={<Wand2 className="w-5 h-5" />} label="Content Generator" path="/dashboard/ai/content-generator" />
-        <SidebarItem icon={<Library className="w-5 h-5" />} label="Bibliothek" path="/dashboard/ai/library" />
-
-        {/* TOOLS */}
-        <div className="pt-5 pb-2 px-3">
-          <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[rgba(249,249,249,0.3)]">Tools</span>
-        </div>
-        <SidebarItem icon={<Bot className="w-5 h-5" />} label="Content-Leads AI" path="/dashboard/assistant" />
+        {featuresLoading ? (
+          // Loading skeleton — minimal, just dims the nav area
+          <div className="space-y-2 animate-pulse">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-8 rounded-lg bg-[rgba(249,249,249,0.05)]"
+                style={{ width: `${60 + (i % 4) * 10}%` }}
+              />
+            ))}
+          </div>
+        ) : (
+          navigationConfig.map((section, si) => (
+            <div key={section.section}>
+              <div className={`${si === 0 ? "pb-2" : "pt-5 pb-2"} px-3`}>
+                <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[rgba(249,249,249,0.3)]">
+                  {section.section}
+                </span>
+              </div>
+              {section.items
+                .filter((item) => isVisible(item.featureSlug))
+                .map((item) => {
+                  const IconComponent = ICON_MAP[item.iconName];
+                  return (
+                    <SidebarItem
+                      key={item.path}
+                      icon={IconComponent ? <IconComponent className="w-5 h-5" /> : null}
+                      label={item.label}
+                      path={item.path}
+                      locked={item.locked}
+                    />
+                  );
+                })}
+            </div>
+          ))
+        )}
       </nav>
 
       {/* User card */}
@@ -113,7 +113,7 @@ export function Sidebar() {
             <SidebarItem icon={<TrendingUp className="w-5 h-5" />} label="Kunden-KPIs" path="/dashboard/advisor/kpis" />
           </div>
         )}
-        {userRole === "admin" && (
+        {(userRole === "admin" || userRole === "super_admin") && (
           <div className="mb-2">
             <SidebarItem icon={<UserCheck className="w-5 h-5" />} label="Berater-View" path="/dashboard/advisor" />
             <SidebarItem icon={<TrendingUp className="w-5 h-5" />} label="Kunden-KPIs" path="/dashboard/advisor/kpis" />
