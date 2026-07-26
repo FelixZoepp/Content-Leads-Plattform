@@ -185,3 +185,156 @@ Die Plattform ist ein **funktionsfähiges Vite-SPA** (React 18 + TS + Tailwind +
 13. **SubscriptionContext ist ein Stub** (hardcoded `tier: "pro"`).
 14. **Keine Tests, keine CI.**
 15. **Dual-Tenant-Modell** (accounts + tenants + organisations) — drei Tabellen für ein Konzept.
+
+---
+
+## Detailbefunde Phase-0-Analyse (2026-07-26)
+
+### D1 — Hardcoded Product Logic
+
+Kein `if (produkt ===` / `if (plan ===` / `if (tier ===` im Frontend. Aber zwei inkonsistente Zugangssysteme:
+
+**System A — `feature_access`-Tabelle (DB-gesteuert):**
+- `/src/hooks/useFeatureAccess.tsx` — nimmt String-Argument, macht DB-Query
+- Genutzt in `FeatureGate`-Wrapper für: `outreach_instagram`, `finance`, `crm`, `content_generator`, `content_analytics`, `content_management`
+
+**System B — Tier-Properties (broken):**
+- Dieselbe `useFeatureAccess.tsx` wird OHNE Argument aufgerufen und soll `isStarterPlan`, `isProPlan`, `canUsePowerDialer`, `canUseObjectionLibrary`, `canUseLiveObjectionHandling`, `currentTier` zurückgeben
+- Diese Properties existieren NICHT in der 43-Zeilen-Datei
+- Betroffene Dateien mit Laufzeit-Bug:
+  - `src/pages/outreach/SalesflowDashboard.tsx:60`
+  - `src/pages/outreach/ObjectionLibrary.tsx:30`
+  - `src/pages/outreach/EmailTemplates.tsx:29`
+  - `src/pages/outreach/PowerDialer.tsx:7`
+  - `src/pages/outreach/Upgrade.tsx:123`
+  - `src/components/outreach/UpgradePrompt.tsx:19`
+
+**Hardcoded Stripe Product-ID:**
+- `src/hooks/useSubscription.tsx:68,87` — `productId: 'prod_TkoJ98sfzflYyR'` fest im Code für Super-Admin und Trial-User
+
+### D2 — Invitation/Onboarding Flow
+
+| Funktion | Token | Expiry | Advisor-Assignment | Produkt-Kontext |
+|---|---|---|---|---|
+| `invite-advisor` | Supabase Magic Link (kein eigenes Token) | 24h (Supabase-Default) | Nein | Nein |
+| `invite-customer` | Supabase Magic Link (kein eigenes Token) | 24h (Supabase-Default) | Nein | Nein |
+| `invite-team-member` | `crypto.randomUUID()` in `invitations`-Tabelle | 30 Tage | N/A | Nein |
+
+**invite-team-member Race Condition:** Token wird als `used_at` markiert noch bevor der User sich eingeloggt hat (Zeile 119 für existierende User, Zeile 170 für neue User) — kein atomarer Single-Use-Check.
+
+**invite-customer für existierende User:** Sendet Password-Reset statt Invite-Link — funktioniert technisch, ist aber semantisch falsch und verwirrt den User.
+
+### D3 — Kennzahlen-Modell
+
+**metrics_snapshot:** `period_type` unterstützt `daily/weekly/monthly`. Tagesauflösung ist möglich. Expliziter Nulltag auch (keine NOT NULL auf Metrik-Spalten). Aber:
+- `source`-Spalte fehlt in der Tabelle — `AdvisorKPIPage.tsx:101` prüft schon `source === "api_heyreach"`, was zur Laufzeit `undefined` ergibt
+- Keine Metrik-Registry — Spalten sind fest kodiert
+
+**Zwei parallele KPI-Systeme:**
+1. `kpi_entries` — für Self-Tracking (Outreach-User), `user_id`-basiert
+2. `metrics_snapshot` — für Berater-Ansicht, `tenant_id`-basiert
+
+### D4 — Recording/Transcription
+
+**`src/utils/RealtimeAudio.ts`:**
+- `RealtimeChat.init()` ruft intern `startRecording()` auf — **immer**, ohne Consent-Gate
+- WebRTC-Verbindung zu OpenAI Realtime API (`gpt-4o-realtime-preview-2024-12-17`)
+- Transkript wird in `transcriptParts[]`-Array gesammelt
+- Keine Consent-Variable, kein Opt-in, kein Hinweistext
+
+**`supabase/functions/transcribe-audio/index.ts`:**
+- Nimmt base64 Audio, sendet an OpenAI Whisper, Sprache: `de`
+- Kein Consent-Parameter
+
+**`call_sessions`-Tabelle:** Hat `recording_url`, `transcript`, `summary` — aber kein `consent_given BOOLEAN`-Feld.
+
+**`src/components/outreach/AvvAgreement.tsx`:** Deckt AVV (Art. 28 DSGVO) ab, aber nicht die Einwilligung des Angerufenen zur Aufnahme.
+
+### D5 — Asset-/Bildgenerierung
+
+- Higgsfield: **Nicht im Code** — kein Treffer
+- Bildgenerierung: **Existiert nicht** — generate-asset produziert ausschließlich Markdown-Text
+- `supabase/functions/generate-asset/index.ts`: 14 Text-Asset-Typen, System-Prompt inline hardcodiert (nicht aus `prompt_templates`-Tabelle)
+- HeyGen Video: `useAutoVideoGeneration.ts` pollt auf `video_status = 'pending_auto'` und ruft `process-pending-videos` auf — **diese Function ist nicht deployed**
+
+### D6 — HeyReach
+
+Nicht implementiert. Vorkommen:
+- `BACKLOG.md:322` — offenes Ticket CL-026
+- `supabase/migrations/0006_intelligence.sql:89` — Provider-Enum enthält 'heyreach'
+- `src/pages/advisor/AdvisorKPIPage.tsx:101` — UI-Badge-Check auf `source === "api_heyreach"` (Laufzeit-Bug: Spalte fehlt)
+
+### D7 — Entitlement-Modell
+
+**`feature_access`-Tabelle:** Korrekte Basis. Aber kein Seeding beim Onboarding — neue User haben Default `is_active = false` auf allem.
+
+**Invited Team-Members:** `trial_ends_at = now() + 10 Jahre` (`invite-team-member/index.ts:114`) — effektiv lebenslanges kostenloses Trial.
+
+**`profiles.role`** (setter/closer/admin) vs. **`user_roles`** (admin/client/advisor): Zwei parallele ENUM-Systeme. RLS nutzt `profiles.role`, Invite-Funktionen nutzen `user_roles`. Nach advisor-invite haben User beide Einträge.
+
+### D8 — Dossier-Konzept
+
+Kein explizites Dossier. Generierung lädt ad-hoc aus `tenants.*`. Fehlende Felder in tenants die Prompts benötigen:
+`icp_rolle`, `icp_branche`, `icp_schmerz`, `ergebnis`, `usp`, `bestes_ergebnis`, `erfahrung_jahre`, `persoenliche_story`, `mechanismus`, `zeitversprechen`, `skalierungsmodell`
+
+Alle mit `|| 'k.A.'` abgefangen — generische statt personalisierte Outputs.
+
+Vorhandene Dossier-Bausteine (verteilt):
+- `tenants` — Basis-KPIs
+- `icp_customers` — ICP-Beispiele
+- `tone_of_voice_profiles` — ToV aus Interview
+- `profile_optimizations` + `profile_sections` — LinkedIn-Sections
+- `generated_assets` — erzeugte Assets
+
+### D9 — Perspective Funnels
+
+Nicht im Code. Eigener `FunnelBuilder` unter `/src/components/outreach/landing-builder/` existiert, ist aber im Outreach-Modul (nicht Consulting) und über Feature-Gate gesperrt.
+
+### D10 — Job-Architektur
+
+| System | Status | Datei |
+|---|---|---|
+| Email-Queue | REAL | `process-email-queue/index.ts`, Deno Queues, DLQ, Rate-Limiting |
+| sync_jobs Tabelle | Schema only | `0006_intelligence.sql` — kein Scheduler |
+| HeyGen Video-Polling | Client-seitig (broken) | `useAutoVideoGeneration.ts` → fehlende Function |
+| Power-Dialer Queue | Partial | `cold_call_queue` als `any` gecasted |
+| Cron/pg_cron | Nicht vorhanden | — |
+
+### D11 — Format-Registry
+
+Dreifach dupliziert, nicht zentral:
+1. `generate-asset/index.ts` — Headline "max 220 Zeichen" im System-Prompt
+2. `src/pages/ai/ProfileOptimizerPage.tsx:11-18` — `SECTIONS`-Array mit `maxChars`
+3. `src/pages/ai/ProfileOptimizerPage.tsx:30-35` — Selbe Limits im System-Prompt
+
+### D12 — Content Factory / Batch-Generierung
+
+Kein Cron, kein Batch-Modus. Manuelle Einzel-Generierung via `ContentCalendarPage.tsx`. Zwei parallele Content-Systeme:
+- `content_posts` (original, für Self-Service)
+- `content_items` + `content_plans` (neu aus 0005, für Advisor-Workflow)
+
+### D13 — Tabellen aus Phase 2
+
+| Migration | Neue Tabellen |
+|---|---|
+| 0002 | `audit_log` |
+| 0003 | `prompt_templates`, `prompt_template_versions`, `ai_usage_log` |
+| 0004 | `courses`, `lessons`, `lesson_progress` |
+| 0005 | `advisor_assignments`, `tone_of_voice_profiles`, `profile_optimizations`, `profile_sections`, `checklist_templates`, `checklist_template_items`, `checklist_instances`, `checklist_item_statuses`, `content_plans`, `content_items`, `generated_content`, `bot_sessions` |
+| 0006 | `surveys`, `survey_response_entries`, `ai_insights`, `upsell_signals`, `pitch_templates`, `integration_credentials`, `sync_jobs` |
+| 0007 | Vault-Funktionen (`store_credential`, `get_credential`, `delete_credential`, `get_credential_status`) |
+| 0008 | `organisations` (dritte parallele Mandanten-Entität) |
+| 0009 | RLS-Policies auf bestehende core tables |
+
+**Organisations vs. Accounts vs. Tenants:** Nach 0008 gibt es drei Mandanten-Entitäten. `organisations` hat ähnliche Felder wie `accounts` und `tenants`. Weitgehend ungenutzt — kaum Code-Referenzen.
+
+### D14 — Working vs. Stubbed
+
+**REAL (connected, functional):**
+metrics_snapshot-Erfassung, kpi_entries, generate-asset (Text), Content Calendar, AI Chat, Profile Optimizer, Akademie CRUD, Checklisten, CSAT Surveys, Advisor-Assignments, Cashflow Dashboard, Email-Queue, Campaigns CRUD, Landing Page Builder, Email Campaigns, Live Objection Handler, Transcription (Whisper), Team Arena
+
+**PARTIAL (schema + UI, aber Lücken):**
+Power Dialer (cold_call_queue nicht typisiert), Lead Search (externe Google-Suche, fragil), Lead Enrichment (Credits ok, Datenbasis extern), Custom Domains (kein Auto-SSL), Health Score (kein Scheduler), Survey-Versand (kein Token-Link-System)
+
+**STUB (schema only oder UI ohne Backend):**
+AI Insights / Upsell Signals (keine automatische Generierung), Prompt Registry (UI ok, aber generate-asset liest es NICHT), HeyGen Video (process-pending-videos fehlt), HeyReach (nur Label), Sequences (kein Executor), Fulfillment Jobs (sync_jobs ohne Cron)
