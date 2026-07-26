@@ -4,7 +4,8 @@ import {
   LayoutDashboard, CalendarDays, Radio,
   FileText, PenTool, BarChart3, DollarSign, Bot,
   GraduationCap, MessageCircle, Video, Settings, HelpCircle,
-  Shield, Target, LineChart, Zap, Package, GitCompare, ClipboardList, UserCheck
+  Shield, Target, LineChart, Zap, Package, GitCompare, ClipboardList, UserCheck,
+  Mic, Wand2, Library
 } from "lucide-react";
 
 export function Sidebar() {
@@ -87,6 +88,14 @@ export function Sidebar() {
         <SidebarItem icon={<GraduationCap className="w-5 h-5" />} label="Training" path="/dashboard/training" />
         <SidebarItem icon={<MessageCircle className="w-5 h-5" />} label="Community" path="/dashboard/community" />
         <SidebarItem icon={<Video className="w-5 h-5" />} label="Live-Übungen" path="/dashboard/live" locked />
+
+        {/* KI-TOOLS */}
+        <div className="pt-5 pb-2 px-3">
+          <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[rgba(249,249,249,0.3)]">KI-Tools</span>
+        </div>
+        <SidebarItem icon={<Mic className="w-5 h-5" />} label="Tone of Voice" path="/dashboard/ai/tone-of-voice" />
+        <SidebarItem icon={<Wand2 className="w-5 h-5" />} label="Content Generator" path="/dashboard/ai/content-generator" />
+        <SidebarItem icon={<Library className="w-5 h-5" />} label="Bibliothek" path="/dashboard/ai/library" />
 
         {/* TOOLS */}
         <div className="pt-5 pb-2 px-3">

@@ -1,0 +1,53 @@
+# Supabase local development configuration
+# Project: Content-Leads-Plattform
+# Remote project ID: ciimklroqbmzcblnbgdk
+# Region: eu-central-1
+
+[api]
+# Local API server port
+port = 54321
+# Schemas to expose via PostgREST
+schemas = ["public", "storage", "graphql_public"]
+# Extra schemas visible but not exposed
+extra_search_path = ["public", "extensions"]
+# Max rows returned without explicit limit
+max_rows = 1000
+
+[db]
+# Local database port
+port = 54322
+# PostgreSQL version to use locally
+major_version = 17
+
+[studio]
+# Supabase Studio port
+port = 54323
+
+[inbucket]
+# Email testing inbox port
+port = 54324
+
+[storage]
+# File size limit for uploads
+file_size_limit = "50MiB"
+
+[auth]
+site_url = "https://content-leads-platform.vercel.app"
+additional_redirect_urls = ["http://localhost:8080", "https://content-leads-platform.vercel.app"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+# Enable email confirmations in production (false for local dev)
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+[auth.sms]
+enable_signup = false
+
+[functions]
+# Edge functions configuration
+verify_jwt = true

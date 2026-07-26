@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140" width="140" height="140">
+<defs>
+<linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F0C040"/><stop offset="1" stop-color="#D4A22A"/></linearGradient>
+<filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="6" stdDeviation="9" flood-color="#D4A22A" flood-opacity="0.45"/></filter>
+</defs>
+<rect x="14" y="12" width="112" height="112" rx="28" fill="url(#g)" filter="url(#glow)"/>
+<text x="70" y="82" text-anchor="middle" font-family="Inter Tight, -apple-system, sans-serif" font-weight="800" font-size="52" fill="#FFFFFF" letter-spacing="-0.03em">CL</text>
+</svg>

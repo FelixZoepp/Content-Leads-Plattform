@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { ServiceProgress } from "@/components/customer/ServiceProgress";
 import {
   BookOpen, Users, MessageSquare, CalendarDays, Video, ArrowRight,
   CheckCircle2, X, Pin, Send, Mail, Phone, TrendingUp, DollarSign,
@@ -230,6 +231,9 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 max-w-6xl">
+
+      {/* ── Service Progress (Berater-Fortschritt) ── */}
+      <ServiceProgress />
 
       {/* ── Quick Start Roadmap ── */}
       <div className="glass-panel fade-up" style={{ animationDelay: "60ms" }}>

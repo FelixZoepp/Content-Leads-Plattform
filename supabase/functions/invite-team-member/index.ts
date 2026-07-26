@@ -73,7 +73,7 @@ serve(async (req) => {
     }
 
     const memberRole = role || "setter";
-    const origin = req.headers.get("origin") || "https://pitchfirst.io";
+    const origin = req.headers.get("origin") || "https://content-leads-platform.vercel.app";
     console.log(`Inviting ${email} as ${memberRole} to account ${callerProfile.account_id}`);
 
     // Create invitation record

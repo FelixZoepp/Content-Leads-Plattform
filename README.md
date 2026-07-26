@@ -1,73 +1,117 @@
-# React + TypeScript + Vite
+# Content-Leads Consulting Plattform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Interne SaaS-Plattform für LinkedIn-Consulting mit drei Nutzergruppen: **Admin**, **Berater**, **Kunde**.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Frontend:** React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui
+- **Backend:** Supabase (PostgreSQL, Auth, Edge Functions, Storage)
+- **Hosting:** Vercel (SPA)
+- **AI:** Anthropic Claude + OpenAI (Fallback) + Google Gemini (Echtzeit)
+- **Telefonie:** Twilio Voice SDK
+- **Payments:** Stripe
+- **E-Mail:** Resend + Custom SMTP
 
-## React Compiler
+## Setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 1. Repo klonen
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+git clone https://github.com/FelixZoepp/Content-Leads-Plattform.git
+cd Content-Leads-Plattform
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Dependencies installieren
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
+
+### 3. Environment Variables
+
+```bash
+cp .env.example .env
+```
+
+Fülle die Werte in `.env` aus. Benötigte Variablen:
+
+| Variable | Beschreibung |
+|---|---|
+| `VITE_SUPABASE_URL` | Supabase Projekt-URL |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase Anon Key |
+| `VITE_SUPABASE_PROJECT_ID` | Supabase Projekt-ID |
+
+### 4. Lokaler Dev-Server
+
+```bash
+npm run dev
+```
+
+App läuft auf `http://localhost:8080`.
+
+## Deployment
+
+Push auf `main` → automatisches Vercel-Deployment auf `content-leads-platform.vercel.app`.
+
+## Projektstruktur
+
+```
+src/
+├── design-system/       # Gold Design-System (Tokens + 15 Komponenten)
+├── components/          # React-Komponenten
+│   ├── ui/              # shadcn/ui (50 Basis-Komponenten)
+│   ├── layout/          # DashboardLayout, Sidebar, TopBar
+│   ├── admin/           # Admin-spezifisch
+│   ├── advisor/         # Berater: Checklisten, Templates
+│   ├── customer/        # Kunden: ServiceProgress, ChecklistProgress
+│   └── ai/              # KI-Bot-Framework
+├── pages/               # Route-Pages
+│   ├── admin/           # PromptManager, AuditLogViewer
+│   ├── training/        # AcademyPage, CoursePage, LessonPage
+│   ├── ai/              # ToneOfVoice, ContentGenerator, Library
+│   ├── consulting/      # KPIs, Finance, Reports, Assets
+│   └── outreach/        # Gesperrt (Outreach-Modul)
+├── hooks/               # React Hooks (useAuth, useDashboardData, etc.)
+├── services/            # Service-Layer (geplant)
+├── contexts/            # React Context (SubscriptionContext)
+└── integrations/        # Supabase Client
+
+supabase/
+├── migrations/          # SQL-Migrationen (Schema-Versionierung)
+├── config.toml          # Supabase-Konfiguration
+└── functions/           # 57+ Edge Functions
+    ├── _shared/         # Gemeinsame Helpers (cors, audit, ai)
+    └── [functions]/     # AI, Auth, Billing, CRM, Email, Sync...
+```
+
+## Rollen
+
+| Rolle | Beschreibung |
+|---|---|
+| Admin | Systemverwaltung, alle Kunden sehen, Prompt-Editor, Audit-Log |
+| Berater | Betreut zugewiesene Kunden, Checklisten, Profiloptimierung |
+| Kunde | Self-Service (Akademie, KI-Bots, KPI-Eingabe), sieht Berater-Fortschritt |
+
+## Dokumentation
+
+| Datei | Inhalt |
+|---|---|
+| `REVIEW.md` | Bestandsanalyse + Gap-Matrix + Risiken |
+| `PLAN.md` | Zielarchitektur, ERD, Rollenmatrix |
+| `BACKLOG.md` | Alle Tickets mit Akzeptanzkriterien |
+| `PROGRESS.md` | Fortschrittsprotokoll pro Ticket |
+| `DATA-FLOWS.md` | KI-Datenflüsse + Drittanbieter |
+| `ASSUMPTIONS.md` | Getroffene Annahmen |
+| `BLOCKERS.md` | Echte Blocker |
+
+## Supabase Edge Functions
+
+Secrets werden über das Supabase Dashboard oder CLI gesetzt:
+
+```bash
+supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
+supabase secrets set OPENAI_API_KEY=sk-...
+supabase secrets set STRIPE_SECRET_KEY=sk_live_...
+```
+
+Vollständige Liste der benötigten Secrets: siehe `.env.example`.

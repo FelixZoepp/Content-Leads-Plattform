@@ -56,8 +56,8 @@ serve(async (req) => {
       }
     }
 
-    const successUrl = `${origin || "https://pitchfirst.io"}/team-arena?slot_added=1&email=${encodeURIComponent(invitedEmail || "")}`;
-    const cancelUrl = `${origin || "https://pitchfirst.io"}/team-arena?slot_cancelled=1`;
+    const successUrl = `${origin || "https://content-leads-platform.vercel.app"}/team-arena?slot_added=1&email=${encodeURIComponent(invitedEmail || "")}`;
+    const cancelUrl = `${origin || "https://content-leads-platform.vercel.app"}/team-arena?slot_cancelled=1`;
 
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: "subscription",

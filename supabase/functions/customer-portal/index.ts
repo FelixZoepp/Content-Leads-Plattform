@@ -61,7 +61,7 @@ serve(async (req) => {
       logStep("Found existing Stripe customer", { customerId });
     }
 
-    const origin = req.headers.get("origin") || "https://pitchfirst.io";
+    const origin = req.headers.get("origin") || "https://content-leads-platform.vercel.app";
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: `${origin}/dashboard`,

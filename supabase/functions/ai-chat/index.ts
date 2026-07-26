@@ -50,7 +50,7 @@ serve(async (req) => {
   }
 
   try {
-    const { message, history = [], userId, tenantId } = await req.json();
+    const { message, history = [], userId, tenantId, systemPrompt: customSystemPrompt } = await req.json();
 
     // Try Anthropic first, then OpenAI
     const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
@@ -79,7 +79,11 @@ serve(async (req) => {
       } catch { /* ignore tenant fetch errors */ }
     }
 
-    const fullSystemPrompt = SYSTEM_PROMPT + tenantContext;
+    // If caller supplies a custom system prompt (e.g. bot-specific prompts), use it directly.
+    // Otherwise fall back to the default Content-Leads prompt + optional tenant context.
+    const fullSystemPrompt = customSystemPrompt
+      ? customSystemPrompt + tenantContext
+      : SYSTEM_PROMPT + tenantContext;
     let reply = "";
     let lastError = "";
 

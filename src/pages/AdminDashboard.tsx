@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import {
   Users, TrendingUp, AlertTriangle, Plus, RefreshCw,
-  ChevronRight, Activity, UserPlus, Mail, Shield, UserCheck, X
+  ChevronRight, Activity, UserPlus, Mail, Shield, UserCheck, X,
+  FileText, ScrollText, BookOpen
 } from "lucide-react";
 
 interface Advisor {
@@ -35,6 +37,7 @@ function HealthBadge({ color, score }: { color: string; score: number }) {
 }
 
 export default function AdminDashboard() {
+  const nav = useNavigate();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
@@ -221,6 +224,49 @@ export default function AdminDashboard() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Admin Tools */}
+      <div className="grid grid-cols-2 gap-4">
+        <button onClick={() => nav("/dashboard/admin/prompts")}
+          className="glass-panel fade-up text-left group" style={{ animationDelay: "260ms" }}>
+          <div className="relative z-[2] flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(197,160,89,0.15)" }}>
+              <FileText className="w-5 h-5 text-[#E9CB8B]" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[13px] font-semibold text-white">Prompt-Verwaltung</p>
+              <p className="text-[11px] text-[rgba(249,249,249,0.4)]">KI-Prompts bearbeiten, testen, versionieren</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-[rgba(249,249,249,0.2)] group-hover:text-[#E9CB8B] transition" />
+          </div>
+        </button>
+        <button onClick={() => nav("/dashboard/admin/audit-log")}
+          className="glass-panel fade-up text-left group" style={{ animationDelay: "320ms" }}>
+          <div className="relative z-[2] flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(197,160,89,0.15)" }}>
+              <ScrollText className="w-5 h-5 text-[#E9CB8B]" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[13px] font-semibold text-white">Audit-Log</p>
+              <p className="text-[11px] text-[rgba(249,249,249,0.4)]">Alle Systemaktionen nachverfolgen</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-[rgba(249,249,249,0.2)] group-hover:text-[#E9CB8B] transition" />
+          </div>
+        </button>
+        <button onClick={() => nav("/dashboard/admin/academy")}
+          className="glass-panel fade-up text-left group" style={{ animationDelay: "380ms" }}>
+          <div className="relative z-[2] flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(197,160,89,0.15)" }}>
+              <BookOpen className="w-5 h-5 text-[#E9CB8B]" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[13px] font-semibold text-white">Akademie verwalten</p>
+              <p className="text-[11px] text-[rgba(249,249,249,0.4)]">Kurse und Lektionen erstellen</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-[rgba(249,249,249,0.2)] group-hover:text-[#E9CB8B] transition" />
+          </div>
+        </button>
       </div>
 
       {/* Advisors */}

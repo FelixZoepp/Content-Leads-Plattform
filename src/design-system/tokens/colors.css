@@ -1,0 +1,21 @@
+:root{
+/* Accent — gold (Content-Leads primary) */
+--gold-050:#FFFBF0;--gold-100:#FFF3D6;--gold-200:#FFE4A8;--gold-300:#FFD470;--gold-400:#F0BD42;--gold-500:#D4A22A;--gold-600:#B88B1F;--gold-700:#966F17;--gold-800:#6B4F10;--gold-900:#3D2C08;
+--accent:var(--gold-500);--accent-hover:var(--gold-600);--accent-soft:var(--gold-050);--accent-border:var(--gold-200);
+--accent-grad:linear-gradient(180deg,#F0C040 0%,#D4A22A 100%);/* @kind color */
+--accent-grad-hover:linear-gradient(180deg,#E5B535 0%,#B88B1F 100%);/* @kind color */
+/* Neutrals */
+--gray-000:#FFFFFF;--gray-025:#FAFBFC;--gray-050:#F5F6F8;--gray-100:#EFF1F4;--gray-200:#E7E9ED;--gray-300:#D6DAE0;--gray-400:#AEB4BD;--gray-500:#8B919B;--gray-600:#5F646D;--gray-700:#41454C;--gray-800:#26282D;--gray-900:#17181A;
+/* Semantic aliases */
+--surface-app:var(--gray-050);--surface-card:var(--gray-000);--surface-subtle:var(--gray-025);--surface-inset:var(--gray-100);
+--border-default:var(--gray-200);--border-strong:var(--gray-300);
+--text-primary:var(--gray-900);--text-secondary:var(--gray-600);--text-tertiary:var(--gray-400);--text-on-accent:#FFFFFF;
+/* Status */
+--green-500:#2FBF71;--green-100:#E4F7EC;--green-700:#1E8A50;
+--amber-500:#E8A13C;--amber-100:#FCF2E0;
+--danger-600:#B3261E;
+--success:var(--green-500);--success-soft:var(--green-100);
+/* Promo edge glow (Upgrade affordances) */
+--promo-glow:conic-gradient(from 180deg,#F0BD42,#F0B36A,#FFE4A8,#D4A22A,#F0BD42);/* @kind color */
+--focus-ring:0 0 0 1.5px var(--gold-400),0 0 0 5px var(--gold-050);
+}

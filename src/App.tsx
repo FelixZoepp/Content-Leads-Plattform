@@ -35,12 +35,22 @@ const AIAssistant = lazy(() => import("./pages/AIAssistant"));
 const Calendar = lazy(() => import("./pages/Calendar"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Support = lazy(() => import("./pages/Support"));
-const Training = lazy(() => import("./pages/training/Training"));
+const AcademyPage = lazy(() => import("./pages/training/AcademyPage"));
+const CoursePage = lazy(() => import("./pages/training/CoursePage"));
+const LessonPage = lazy(() => import("./pages/training/LessonPage"));
 const Community = lazy(() => import("./pages/community/Community"));
 const SetPassword = lazy(() => import("./pages/SetPassword"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdvisorDashboard = lazy(() => import("./pages/AdvisorDashboard"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const PromptManager = lazy(() => import("./pages/admin/PromptManager"));
+const AuditLogViewer = lazy(() => import("./pages/admin/AuditLogViewer"));
+const AcademyCMS = lazy(() => import("./pages/admin/AcademyCMS"));
+
+// AI Tools
+const ToneOfVoicePage = lazy(() => import("./pages/ai/ToneOfVoicePage"));
+const ContentGeneratorPage = lazy(() => import("./pages/ai/ContentGeneratorPage"));
+const ContentLibraryPage = lazy(() => import("./pages/ai/ContentLibraryPage"));
 
 // Outreach — locked until July 2025
 const OutreachLocked = lazy(() => import("./pages/OutreachLocked"));
@@ -111,11 +121,21 @@ function DashboardRoutes() {
           <Route path="games" element={<OutreachLocked />} />
 
           {/* Learn */}
-          <Route path="training" element={<Training />} />
+          <Route path="training" element={<AcademyPage />} />
+          <Route path="training/:courseId" element={<CoursePage />} />
+          <Route path="training/:courseId/:lessonId" element={<LessonPage />} />
           <Route path="community" element={<Community />} />
+
+          {/* AI Tools */}
+          <Route path="ai/tone-of-voice" element={<ToneOfVoicePage />} />
+          <Route path="ai/content-generator" element={<ContentGeneratorPage />} />
+          <Route path="ai/library" element={<ContentLibraryPage />} />
 
           {/* Admin */}
           <Route path="admin" element={<AdminDashboard />} />
+          <Route path="admin/prompts" element={<PromptManager />} />
+          <Route path="admin/audit-log" element={<AuditLogViewer />} />
+          <Route path="admin/academy" element={<AcademyCMS />} />
           <Route path="advisor" element={<AdvisorDashboard />} />
           <Route path="settings" element={<Settings />} />
           <Route path="support" element={<Support />} />

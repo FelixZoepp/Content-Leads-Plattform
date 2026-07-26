@@ -213,7 +213,7 @@ serve(async (req) => {
       }
 
       // NEW subscription - create checkout
-      const origin = req.headers.get("origin") || "https://pitchfirst.io";
+      const origin = req.headers.get("origin") || "https://content-leads-platform.vercel.app";
       const sessionParams: Stripe.Checkout.SessionCreateParams = {
         mode: "subscription",
         line_items: [{ price: targetPkg.price_id, quantity: 1 }],

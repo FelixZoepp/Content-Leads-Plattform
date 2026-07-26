@@ -55,7 +55,7 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // PitchFirst Product IDs - only count these as valid subscriptions
+    // Content-Leads Product IDs - only count these as valid subscriptions
     const PITCHFIRST_PRODUCT_IDS = [
       "prod_Tka87AKXNmsZUv", // Starter Monthly
       "prod_TkaAeLeq8rEn90", // Starter Yearly
@@ -63,7 +63,7 @@ serve(async (req) => {
       "prod_TkoJ8E0e8l4vwV", // Pro Yearly
     ];
 
-    // Excluded customer emails (not PitchFirst customers)
+    // Excluded customer emails (not Content-Leads customers)
     const EXCLUDED_CUSTOMER_EMAILS = [
       "leon@ostermann.email", // Wrong payment link
     ];
@@ -84,7 +84,7 @@ serve(async (req) => {
 
       const response = await stripe.subscriptions.list(params);
       
-      // Filter to only include PitchFirst products and exclude certain customers
+      // Filter to only include Content-Leads products and exclude certain customers
       const pitchFirstSubs = response.data.filter((sub: Stripe.Subscription) => {
         const customer = sub.customer as Stripe.Customer;
         const customerEmail = customer?.email?.toLowerCase() || '';
@@ -109,7 +109,7 @@ serve(async (req) => {
       }
     }
 
-    logStep("Fetched PitchFirst subscriptions", { count: allSubscriptions.length });
+    logStep("Fetched Content-Leads subscriptions", { count: allSubscriptions.length });
 
     // Calculate MRR and ARR
     let mrr = 0;

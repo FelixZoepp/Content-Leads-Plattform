@@ -35,5 +35,4 @@
 ## Login
 
 - **URL**: https://content-leads-platform.vercel.app
-- **Email**: felix@content-leads.de
-- **Passwort**: ContentLeads2026!
+- **Credentials**: Siehe 1Password / Vercel Environment Variables

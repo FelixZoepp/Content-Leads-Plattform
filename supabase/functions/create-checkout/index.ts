@@ -74,8 +74,8 @@ serve(async (req) => {
     }
 
     // Create checkout session with dynamic success URL including session_id
-    const successUrl = `${origin || "https://pitchfirst.io"}/subscription-success?session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = `${origin || "https://pitchfirst.io"}/upgrade`;
+    const successUrl = `${origin || "https://content-leads-platform.vercel.app"}/subscription-success?session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = `${origin || "https://content-leads-platform.vercel.app"}/upgrade`;
 
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: "subscription",
