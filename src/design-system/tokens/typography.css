@@ -1,14 +1,12 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&display=swap");
 :root{
---font-ui:"Inter Tight",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif;
+--font-ui:"Inter Tight","Inter",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif;
 --font-mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;
-/* Scale — exactly 4 sizes, no fifth */
+/* Scale — exactly 4 sizes */
 --text-display:clamp(40px,5vw,64px);--text-h2:32px;--text-lead:18px;--text-body:15px;
 --weight-regular:400;--weight-medium:500;--weight-semibold:600;--weight-bold:700;--weight-heavy:800;
 --leading-heading:1.05;--leading-body:1.5;
 --tracking-heading:-0.03em;--tracking-body:-0.011em;
 }
-body{font-family:var(--font-ui);color:var(--text-primary);letter-spacing:var(--tracking-body);-webkit-font-smoothing:antialiased}
-h1,h2,h3{font-weight:var(--weight-heavy);letter-spacing:var(--tracking-heading);line-height:var(--leading-heading)}
-a{color:var(--gold-600);text-decoration:none}
-a:hover{color:var(--gold-700)}
+a{color:var(--gold-500);text-decoration:none}
+a:hover{color:var(--gold-400)}

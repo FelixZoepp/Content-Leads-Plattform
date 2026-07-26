@@ -2,7 +2,7 @@ import React from 'react';
 export function Badge({tone='accent',children,style}){
   const tones={
     accent:{background:'var(--gold-500)',color:'#fff'},
-    softAccent:{background:'var(--accent-soft)',color:'var(--gold-600)'},
+    softAccent:{background:'var(--ds-accent-soft)',color:'var(--gold-600)'},
     success:{background:'var(--success-soft)',color:'var(--green-700)'},
     neutral:{background:'var(--gray-100)',color:'var(--text-secondary)'},
     outline:{background:'#fff',color:'var(--text-secondary)',border:'1px solid var(--gray-200)'}

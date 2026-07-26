@@ -3,7 +3,7 @@ import {Button} from '../core/Button.jsx';
 import {Badge} from '../core/Badge.jsx';
 import {Select} from '../core/Select.jsx';
 export function PricingCard({name,price,period='/Monat',band,bandTone='accent',current=false,creditsOptions,highlights=[],highlightsTitle='Paket-Highlights:',cta='Paket wählen',ctaVariant,onCta,style}){
-  const bands={accent:{background:'var(--accent-grad)',color:'#fff'},offer:{background:'linear-gradient(180deg,#7BE0A8,#4ECE8B)',color:'#0E4A2B'}};
+  const bands={accent:{background:'var(--ds-accent-grad)',color:'#fff'},offer:{background:'linear-gradient(180deg,#7BE0A8,#4ECE8B)',color:'#0E4A2B'}};
   return <div style={{width:300,background:'var(--surface-card)',borderRadius:'var(--radius-xl)',boxShadow:'var(--shadow-md)',overflow:'hidden',fontFamily:'var(--font-ui)',display:'flex',flexDirection:'column',...style}}>
     {band&&<div style={{textAlign:'center',padding:'12px 16px',fontSize:15,fontWeight:600,...bands[bandTone]}}>{band}</div>}
     <div style={{padding:28,display:'flex',flexDirection:'column',gap:18,flex:1}}>
