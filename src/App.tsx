@@ -51,6 +51,10 @@ const ProductRegistry = lazy(() => import("./pages/admin/ProductRegistry"));
 const CostDashboard = lazy(() => import("./pages/admin/CostDashboard"));
 const SurveyManager = lazy(() => import("./pages/admin/SurveyManager"));
 const PitchGenerator = lazy(() => import("./pages/admin/PitchGenerator"));
+const FormatRegistryPage = lazy(() => import("./pages/admin/FormatRegistryPage"));
+const JobMonitor = lazy(() => import("./pages/admin/JobMonitor"));
+const OnboardingTrackEditor = lazy(() => import("./pages/admin/OnboardingTrackEditor"));
+const OnboardingWizard = lazy(() => import("./pages/onboarding/OnboardingWizard"));
 
 // AI Tools
 const ToneOfVoicePage = lazy(() => import("./pages/ai/ToneOfVoicePage"));
@@ -148,6 +152,10 @@ function DashboardRoutes() {
           <Route path="admin/costs" element={<CostDashboard />} />
           <Route path="admin/surveys" element={<SurveyManager />} />
           <Route path="admin/pitch-generator" element={<PitchGenerator />} />
+          <Route path="admin/formats" element={<FormatRegistryPage />} />
+          <Route path="admin/jobs" element={<JobMonitor />} />
+          <Route path="admin/onboarding-tracks" element={<OnboardingTrackEditor />} />
+          <Route path="onboarding" element={<OnboardingWizard />} />
           <Route path="advisor" element={<AdvisorDashboard />} />
           <Route path="advisor/kpis" element={<AdvisorKPIPage />} />
           <Route path="metrics/daily" element={<DailyInputPage />} />
