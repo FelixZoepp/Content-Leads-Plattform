@@ -7,7 +7,7 @@ import { RevenueWidget } from "@/components/admin/RevenueWidget";
 import {
   Users, TrendingUp, AlertTriangle, Plus, RefreshCw,
   ChevronRight, Activity, UserPlus, Mail, Shield, UserCheck, X,
-  FileText, ScrollText, BookOpen, Eye, BarChart2, MessageSquare
+  FileText, ScrollText, BookOpen, Eye, BarChart2, MessageSquare, ListOrdered
 } from "lucide-react";
 
 interface Advisor {
@@ -294,6 +294,19 @@ export default function AdminDashboard() {
             <div className="flex-1">
               <p className="text-[13px] font-semibold text-white">Pitch-Generator</p>
               <p className="text-[11px] text-[rgba(249,249,249,0.4)]">KI-Pitches für E-Mail, Telefon & LinkedIn</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-[rgba(249,249,249,0.2)] group-hover:text-[#E9CB8B] transition" />
+          </div>
+        </button>
+        <button onClick={() => nav("/dashboard/admin/onboarding-tracks")}
+          className="glass-panel fade-up text-left group" style={{ animationDelay: "560ms" }}>
+          <div className="relative z-[2] flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(197,160,89,0.15)" }}>
+              <ListOrdered className="w-5 h-5 text-[#E9CB8B]" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[13px] font-semibold text-white">Onboarding Tracks</p>
+              <p className="text-[11px] text-[rgba(249,249,249,0.4)]">Schritte & Produkt-Tracks konfigurieren</p>
             </div>
             <ChevronRight className="w-4 h-4 text-[rgba(249,249,249,0.2)] group-hover:text-[#E9CB8B] transition" />
           </div>
