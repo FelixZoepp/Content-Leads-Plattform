@@ -61,6 +61,7 @@ const JobMonitor = lazy(() => import("./pages/admin/JobMonitor"));
 const FeatureFlags = lazy(() => import("./pages/admin/FeatureFlags"));
 const OnboardingTrackEditor = lazy(() => import("./pages/admin/OnboardingTrackEditor"));
 const InvitationManager = lazy(() => import("./pages/admin/InvitationManager"));
+const CustomerOverview = lazy(() => import("./pages/admin/CustomerOverview"));
 const OnboardingWizard = lazy(() => import("./pages/onboarding/OnboardingWizard"));
 const SurveyResponsePage = lazy(() => import("./pages/public/SurveyResponsePage"));
 
@@ -165,6 +166,7 @@ function DashboardRoutes() {
           <Route path="admin/feature-flags" element={<FeatureFlags />} />
           <Route path="admin/onboarding-tracks" element={<OnboardingTrackEditor />} />
           <Route path="admin/invitations" element={<InvitationManager />} />
+          <Route path="admin/customers" element={<CustomerOverview />} />
           <Route path="admin/metrics" element={<MetricRegistryPage />} />
           <Route path="onboarding" element={<OnboardingWizard />} />
           <Route path="advisor" element={<AdvisorDashboard />} />
