@@ -4,8 +4,16 @@ import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Plus, Loader2, ChevronRight, Sparkles,
   BarChart2, MessageSquare, ToggleLeft, ToggleRight, X, Save,
+  TrendingUp, PieChart, Bell,
 } from "lucide-react";
 import { SurveyQuestionBuilder, SurveyQuestion } from "@/components/admin/SurveyQuestionBuilder";
+import {
+  LineChart, Line, BarChart, Bar, PieChart as RechartsPie, Pie, Cell,
+  XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
+} from "recharts";
+import { checkSurveyForAlerts } from "@/_shared/alerts";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Survey {
   id: string;
@@ -27,6 +35,9 @@ interface SurveyResponse {
 }
 
 type View = "list" | "create" | "detail";
+type DetailTab = "responses" | "trends";
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function npsCategory(score: number): "promoter" | "passive" | "detractor" {
   if (score >= 9) return "promoter";
@@ -34,9 +45,36 @@ function npsCategory(score: number): "promoter" | "passive" | "detractor" {
   return "detractor";
 }
 
+const SENTIMENT_COLORS: Record<string, string> = {
+  positiv: "#7FC29B",
+  neutral: "#E9CB8B",
+  negativ: "#E87467",
+};
+
+// Custom recharts tooltip styled for the dark theme
+function DarkTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div
+      className="rounded-lg px-3 py-2 text-[11px] text-white"
+      style={{ background: "rgba(20,22,22,0.95)", border: "1px solid rgba(249,249,249,0.1)" }}
+    >
+      {label && <p className="text-[rgba(249,249,249,0.4)] mb-1">{label}</p>}
+      {payload.map((p: any, i: number) => (
+        <p key={i} style={{ color: p.color || "#E9CB8B" }}>
+          {p.name}: <span className="font-semibold">{p.value}</span>
+        </p>
+      ))}
+    </div>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
 export default function SurveyManager() {
   const navigate = useNavigate();
   const [view, setView] = useState<View>("list");
+  const [detailTab, setDetailTab] = useState<DetailTab>("responses");
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [selectedSurvey, setSelectedSurvey] = useState<Survey | null>(null);
   const [responses, setResponses] = useState<SurveyResponse[]>([]);
@@ -45,6 +83,7 @@ export default function SurveyManager() {
   const [saving, setSaving] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [loadingResponses, setLoadingResponses] = useState(false);
+  const [alertsTriggered, setAlertsTriggered] = useState(false);
 
   // Create form state
   const [draftTitle, setDraftTitle] = useState("");
@@ -68,6 +107,8 @@ export default function SurveyManager() {
   async function openDetail(survey: Survey) {
     setSelectedSurvey(survey);
     setAiInsight("");
+    setDetailTab("responses");
+    setAlertsTriggered(false);
     setLoadingResponses(true);
     setView("detail");
 
@@ -113,13 +154,15 @@ export default function SurveyManager() {
     }
   }
 
+  // ── CL-160: AI Analysis v2 ───────────────────────────────────────────────
+
   async function runAiAnalysis() {
     if (!selectedSurvey || responses.length === 0) return;
     setAnalyzing(true);
     setAiInsight("");
+    setAlertsTriggered(false);
 
     try {
-      // Build context from responses
       const responseSummary = responses.slice(0, 50).map((r, i) => {
         const lines = Object.entries(r.answers || {}).map(([qId, val]) => {
           const q = selectedSurvey.questions.find(q => q.id === qId);
@@ -133,6 +176,8 @@ export default function SurveyManager() {
 2. Top 3-5 Themen/Themenbereiche als Tags (z.B. "Onboarding", "Support", "Ergebnisse")
 3. Konkrete Handlungsempfehlungen (max. 3 Punkte)
 4. NPS-Zusammenfassung wenn NPS-Daten vorhanden
+5. Pro Antwort: Sentiment (positiv/neutral/negativ) und Theme-Tags im JSON-Block am Ende:
+   RESPONSE_SENTIMENTS_JSON: [{"id":"<response_id>","sentiment":"positiv","theme_tags":["Tag1","Tag2"]},...]
 
 Antworte auf Deutsch, strukturiert und prägnant.`;
 
@@ -142,7 +187,7 @@ Antworte auf Deutsch, strukturiert und prägnant.`;
           messages: [
             {
               role: "user",
-              content: `Umfrage: "${selectedSurvey.title}"\n${responses.length} Antworten insgesamt\n\n${responseSummary}`,
+              content: `Umfrage: "${selectedSurvey.title}"\n${responses.length} Antworten insgesamt\nResponse-IDs: ${responses.slice(0, 50).map(r => r.id).join(", ")}\n\n${responseSummary}`,
             },
           ],
         },
@@ -150,15 +195,70 @@ Antworte auf Deutsch, strukturiert und prägnant.`;
 
       if (error) throw error;
       const insight = data?.response || data?.message || "Keine Analyse verfügbar.";
-      setAiInsight(insight);
 
-      // Persist insight to ai_insights table
+      // Parse per-response sentiment/tags from the JSON block
+      const jsonMatch = insight.match(/RESPONSE_SENTIMENTS_JSON:\s*(\[[\s\S]*?\])/);
+      let perResponseData: Array<{ id: string; sentiment: string; theme_tags: string[] }> = [];
+      if (jsonMatch) {
+        try {
+          perResponseData = JSON.parse(jsonMatch[1]);
+        } catch {
+          // ignore parse errors
+        }
+      }
+
+      // Strip the JSON block from the displayed insight
+      const cleanInsight = insight.replace(/RESPONSE_SENTIMENTS_JSON:\s*\[[\s\S]*?\]/, "").trim();
+      setAiInsight(cleanInsight);
+
+      // Save per-response sentiment + theme_tags back to DB
+      if (perResponseData.length > 0) {
+        const updates = perResponseData.map(pr =>
+          (supabase as any)
+            .from("survey_response_entries")
+            .update({ sentiment: pr.sentiment, theme_tags: pr.theme_tags })
+            .eq("id", pr.id)
+            .catch(() => null)
+        );
+        await Promise.allSettled(updates);
+
+        // Update local state immediately
+        setResponses(prev =>
+          prev.map(r => {
+            const match = perResponseData.find(pr => pr.id === r.id);
+            return match ? { ...r, sentiment: match.sentiment, theme_tags: match.theme_tags } : r;
+          })
+        );
+
+        // CL-160: Check for critical responses and trigger alerts
+        const alertPayloads = perResponseData
+          .map(pr => {
+            const r = responses.find(x => x.id === pr.id);
+            if (!r) return null;
+            return {
+              survey_id: selectedSurvey.id,
+              survey_title: selectedSurvey.title,
+              tenant_id: r.tenant_id,
+              company_name: r.tenants?.company_name || "Unbekannt",
+              response_id: pr.id,
+              sentiment: pr.sentiment,
+              theme_tags: pr.theme_tags,
+              answers: r.answers,
+            };
+          })
+          .filter(Boolean) as any[];
+
+        await checkSurveyForAlerts(alertPayloads);
+        setAlertsTriggered(true);
+      }
+
+      // Persist overall insight to ai_insights table
       await (supabase as any).from("ai_insights").insert({
         survey_id: selectedSurvey.id,
-        content: insight,
+        content: cleanInsight,
         type: "survey_analysis",
         created_at: new Date().toISOString(),
-      }).catch(() => null); // non-blocking, ignore if column mismatch
+      }).catch(() => null);
     } catch (e: any) {
       setAiInsight(`Fehler bei der Analyse: ${e.message}`);
     } finally {
@@ -166,7 +266,8 @@ Antworte auf Deutsch, strukturiert und prägnant.`;
     }
   }
 
-  // ── NPS distribution from responses ──────────────────────────────────────
+  // ── NPS helpers ───────────────────────────────────────────────────────────
+
   function getNpsDistribution() {
     const npsAnswers: number[] = [];
     for (const r of responses) {
@@ -182,10 +283,9 @@ Antworte auf Deutsch, strukturiert und prägnant.`;
     const detractors = npsAnswers.filter(v => v < 7).length;
     const total = npsAnswers.length;
     const score = total > 0 ? Math.round(((promoters - detractors) / total) * 100) : null;
-    return { promoters, passives, detractors, total, score };
+    return { promoters, passives, detractors, total, score, raw: npsAnswers };
   }
 
-  // ── Sentiment summary from response metadata ─────────────────────────────
   function getSentimentCounts() {
     const counts: Record<string, number> = { positiv: 0, neutral: 0, negativ: 0 };
     for (const r of responses) {
@@ -205,6 +305,84 @@ Antworte auf Deutsch, strukturiert und prägnant.`;
     return Object.entries(tagCounts)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 8);
+  }
+
+  // ── CL-159: Trend data builders ───────────────────────────────────────────
+
+  function getNpsTrendData() {
+    if (!selectedSurvey) return [];
+
+    // Group responses by week
+    const byWeek: Record<string, { promoters: number; detractors: number; total: number }> = {};
+
+    for (const r of responses) {
+      const date = new Date(r.submitted_at);
+      // ISO week label: "KW WW YYYY"
+      const weekStart = new Date(date);
+      weekStart.setDate(date.getDate() - date.getDay() + 1); // Monday
+      const label = weekStart.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
+
+      if (!byWeek[label]) byWeek[label] = { promoters: 0, detractors: 0, total: 0 };
+
+      for (const q of selectedSurvey.questions) {
+        if (q.type === "nps" && r.answers?.[q.id] !== undefined) {
+          const v = Number(r.answers[q.id]);
+          if (!isNaN(v)) {
+            byWeek[label].total++;
+            if (v >= 9) byWeek[label].promoters++;
+            if (v <= 6) byWeek[label].detractors++;
+          }
+        }
+      }
+    }
+
+    return Object.entries(byWeek)
+      .map(([week, d]) => ({
+        week,
+        nps: d.total > 0 ? Math.round(((d.promoters - d.detractors) / d.total) * 100) : 0,
+        responses: d.total,
+      }))
+      .reverse();
+  }
+
+  function getSentimentPieData() {
+    const counts = getSentimentCounts();
+    return [
+      { name: "Positiv", value: counts.positiv, color: SENTIMENT_COLORS.positiv },
+      { name: "Neutral", value: counts.neutral, color: SENTIMENT_COLORS.neutral },
+      { name: "Negativ", value: counts.negativ, color: SENTIMENT_COLORS.negativ },
+    ].filter(d => d.value > 0);
+  }
+
+  function getThemeBarData() {
+    return getTopThemes().slice(0, 5).map(([tag, count]) => ({ tag, count }));
+  }
+
+  function getResponseRateData() {
+    // Group responses by survey (for multi-survey comparison in future),
+    // here just show response count over time as a simple bar
+    const byMonth: Record<string, number> = {};
+    for (const r of responses) {
+      const label = new Date(r.submitted_at).toLocaleDateString("de-DE", { month: "short", year: "2-digit" });
+      byMonth[label] = (byMonth[label] || 0) + 1;
+    }
+    return Object.entries(byMonth)
+      .map(([month, count]) => ({ month, count }))
+      .reverse();
+  }
+
+  // ── Theme cloud from all tagged responses ─────────────────────────────────
+  function getAllThemeTags() {
+    const tagCounts: Record<string, number> = {};
+    for (const r of responses) {
+      for (const tag of r.theme_tags || []) {
+        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+      }
+    }
+    const max = Math.max(1, ...Object.values(tagCounts));
+    return Object.entries(tagCounts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([tag, count]) => ({ tag, count, weight: count / max }));
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -285,6 +463,11 @@ Antworte auf Deutsch, strukturiert und prägnant.`;
     const nps = getNpsDistribution();
     const sentiment = getSentimentCounts();
     const themes = getTopThemes();
+    const themeTags = getAllThemeTags();
+    const npsTrend = getNpsTrendData();
+    const sentimentPie = getSentimentPieData();
+    const themeBar = getThemeBarData();
+    const responseRate = getResponseRateData();
 
     return (
       <div className="max-w-5xl mx-auto p-6 space-y-6">
@@ -444,97 +627,314 @@ Antworte auf Deutsch, strukturiert und prägnant.`;
           </div>
         )}
 
-        {/* AI Insight */}
+        {/* AI Insight (CL-160) */}
         {aiInsight && (
           <div className="glass-panel" style={{ borderColor: "rgba(197,160,89,0.2)" }}>
             <div className="relative z-[2]">
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="w-4 h-4 text-[#E9CB8B]" />
-                <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#E9CB8B]">KI-Analyse</span>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#E9CB8B]" />
+                  <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#E9CB8B]">KI-Analyse</span>
+                </div>
+                {alertsTriggered && (
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-semibold text-[#E87467] bg-[rgba(232,116,103,0.1)] border border-[rgba(232,116,103,0.2)]">
+                    <Bell className="w-3 h-3" />
+                    Alerts ausgelöst
+                  </div>
+                )}
               </div>
               <p className="text-[13px] text-[rgba(249,249,249,0.8)] whitespace-pre-wrap leading-relaxed">{aiInsight}</p>
+
+              {/* CL-160: Theme cloud */}
+              {themeTags.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-[rgba(249,249,249,0.05)]">
+                  <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-[rgba(249,249,249,0.3)] mb-3">
+                    Theme Cloud
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {themeTags.map(({ tag, count, weight }) => (
+                      <span
+                        key={tag}
+                        className="px-2.5 py-1 rounded-full font-medium border"
+                        style={{
+                          fontSize: `${Math.round(9 + weight * 5)}px`,
+                          color: weight > 0.6 ? "#E9CB8B" : weight > 0.3 ? "rgba(233,203,139,0.7)" : "rgba(249,249,249,0.35)",
+                          borderColor: weight > 0.6 ? "rgba(197,160,89,0.4)" : weight > 0.3 ? "rgba(197,160,89,0.2)" : "rgba(249,249,249,0.08)",
+                          background: weight > 0.6 ? "rgba(197,160,89,0.1)" : "transparent",
+                        }}
+                      >
+                        {tag}
+                        <span className="ml-1 opacity-60 text-[9px]">{count}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* Responses table */}
-        <div className="glass-panel" style={{ padding: 0 }}>
-          <div className="relative z-[2]">
-            <div className="px-5 py-4 border-b border-[rgba(249,249,249,0.08)] flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-[#E9CB8B]" />
-              <h2 className="text-[13px] font-medium text-white">
-                Antworten ({responses.length})
-              </h2>
-            </div>
-            {loadingResponses ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-[rgba(249,249,249,0.3)]" />
-              </div>
-            ) : responses.length === 0 ? (
-              <div className="py-12 text-center">
-                <MessageSquare className="w-10 h-10 text-[rgba(249,249,249,0.08)] mx-auto mb-3" />
-                <p className="text-[12px] text-[rgba(249,249,249,0.3)]">Noch keine Antworten für diese Umfrage</p>
+        {/* ── Tab bar ─────────────────────────────────────────────────────── */}
+        <div className="flex gap-1 border-b border-[rgba(249,249,249,0.06)] pb-0">
+          {[
+            { id: "responses" as DetailTab, label: "Antworten", icon: <MessageSquare className="w-3.5 h-3.5" /> },
+            { id: "trends" as DetailTab, label: "Trends", icon: <TrendingUp className="w-3.5 h-3.5" /> },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setDetailTab(tab.id)}
+              className="flex items-center gap-1.5 px-4 py-2.5 text-[12px] font-medium transition border-b-2 -mb-px"
+              style={{
+                color: detailTab === tab.id ? "#E9CB8B" : "rgba(249,249,249,0.35)",
+                borderBottomColor: detailTab === tab.id ? "#E9CB8B" : "transparent",
+              }}
+            >
+              {tab.icon} {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── CL-159: Trends tab ──────────────────────────────────────────── */}
+        {detailTab === "trends" && (
+          <div className="space-y-5">
+            {responses.length === 0 ? (
+              <div className="glass-panel text-center py-16">
+                <div className="relative z-[2]">
+                  <PieChart className="w-10 h-10 text-[rgba(249,249,249,0.08)] mx-auto mb-3" />
+                  <p className="text-[12px] text-[rgba(249,249,249,0.3)]">Noch keine Antworten für Trend-Analyse</p>
+                </div>
               </div>
             ) : (
-              <div className="divide-y divide-[rgba(249,249,249,0.05)]">
-                {responses.map((r) => (
-                  <div key={r.id} className="px-5 py-4 hover:bg-[rgba(249,249,249,0.02)] transition">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[12px] font-medium text-white">
-                          {r.tenants?.company_name || "Unbekannt"}
-                        </span>
-                        {r.sentiment && (
-                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide ${
-                            r.sentiment.toLowerCase() === "positiv" ? "text-[#7FC29B] bg-[rgba(127,194,155,0.1)]" :
-                            r.sentiment.toLowerCase() === "negativ" ? "text-[#E87467] bg-[rgba(232,116,103,0.1)]" :
-                            "text-[#E9CB8B] bg-[rgba(233,203,139,0.1)]"
-                          }`}>
-                            {r.sentiment}
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-[10px] text-[rgba(249,249,249,0.3)]">
-                        {new Date(r.submitted_at).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-                      </span>
+              <>
+                {/* NPS trend line chart */}
+                {npsTrend.length > 1 && (
+                  <div className="glass-panel">
+                    <div className="relative z-[2]">
+                      <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-[rgba(249,249,249,0.4)] mb-4">
+                        NPS Trend (wöchentlich)
+                      </p>
+                      <ResponsiveContainer width="100%" height={200}>
+                        <LineChart data={npsTrend}>
+                          <XAxis
+                            dataKey="week"
+                            tick={{ fill: "rgba(249,249,249,0.3)", fontSize: 10 }}
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <YAxis
+                            domain={[-100, 100]}
+                            tick={{ fill: "rgba(249,249,249,0.3)", fontSize: 10 }}
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <Tooltip content={<DarkTooltip />} />
+                          <Line
+                            type="monotone"
+                            dataKey="nps"
+                            name="NPS"
+                            stroke="#E9CB8B"
+                            strokeWidth={2}
+                            dot={{ fill: "#E9CB8B", r: 3, strokeWidth: 0 }}
+                            activeDot={{ r: 5, fill: "#E9CB8B" }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
                     </div>
-                    <div className="space-y-1.5">
-                      {selectedSurvey.questions.map(q => {
-                        const val = r.answers?.[q.id];
-                        if (val === undefined || val === null) return null;
-                        return (
-                          <div key={q.id} className="flex gap-3 text-[12px]">
-                            <span className="text-[rgba(249,249,249,0.35)] shrink-0 max-w-[240px] truncate">{q.question}</span>
-                            <span className="text-[rgba(249,249,249,0.7)] font-medium">
-                              {String(val)}
-                              {q.type === "nps" && (
-                                <span className={`ml-1.5 text-[9px] ${
-                                  npsCategory(Number(val)) === "promoter" ? "text-[#7FC29B]" :
-                                  npsCategory(Number(val)) === "passive" ? "text-[#E9CB8B]" : "text-[#E87467]"
-                                }`}>
-                                  ({npsCategory(Number(val))})
-                                </span>
-                              )}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {r.theme_tags && r.theme_tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {r.theme_tags.map(tag => (
-                          <span key={tag} className="px-2 py-0.5 rounded-full text-[9px] text-[#E9CB8B] border border-[rgba(197,160,89,0.2)]">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
                   </div>
-                ))}
-              </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  {/* Sentiment pie */}
+                  {sentimentPie.length > 0 && (
+                    <div className="glass-panel">
+                      <div className="relative z-[2]">
+                        <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-[rgba(249,249,249,0.4)] mb-4">
+                          Sentiment Verteilung
+                        </p>
+                        <ResponsiveContainer width="100%" height={180}>
+                          <RechartsPie>
+                            <Pie
+                              data={sentimentPie}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={45}
+                              outerRadius={70}
+                              paddingAngle={3}
+                              dataKey="value"
+                              nameKey="name"
+                              label={({ name, percent }) =>
+                                `${name} ${Math.round(percent * 100)}%`
+                              }
+                              labelLine={false}
+                            >
+                              {sentimentPie.map((entry, i) => (
+                                <Cell key={i} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip content={<DarkTooltip />} />
+                          </RechartsPie>
+                        </ResponsiveContainer>
+                        <div className="flex justify-center gap-4 mt-2">
+                          {sentimentPie.map(s => (
+                            <div key={s.name} className="flex items-center gap-1.5">
+                              <div className="w-2 h-2 rounded-full" style={{ background: s.color }} />
+                              <span className="text-[10px] text-[rgba(249,249,249,0.4)]">{s.name}: {s.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Top 5 themes bar chart */}
+                  {themeBar.length > 0 && (
+                    <div className="glass-panel">
+                      <div className="relative z-[2]">
+                        <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-[rgba(249,249,249,0.4)] mb-4">
+                          Top 5 Themen
+                        </p>
+                        <ResponsiveContainer width="100%" height={180}>
+                          <BarChart data={themeBar} layout="vertical" margin={{ left: 0, right: 16 }}>
+                            <XAxis
+                              type="number"
+                              tick={{ fill: "rgba(249,249,249,0.3)", fontSize: 10 }}
+                              axisLine={false}
+                              tickLine={false}
+                            />
+                            <YAxis
+                              type="category"
+                              dataKey="tag"
+                              width={90}
+                              tick={{ fill: "rgba(249,249,249,0.5)", fontSize: 10 }}
+                              axisLine={false}
+                              tickLine={false}
+                            />
+                            <Tooltip content={<DarkTooltip />} />
+                            <Bar dataKey="count" name="Nennungen" fill="#E9CB8B" radius={[0, 4, 4, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Response rate per month */}
+                {responseRate.length > 0 && (
+                  <div className="glass-panel">
+                    <div className="relative z-[2]">
+                      <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-[rgba(249,249,249,0.4)] mb-4">
+                        Antworten pro Monat
+                      </p>
+                      <ResponsiveContainer width="100%" height={160}>
+                        <BarChart data={responseRate}>
+                          <XAxis
+                            dataKey="month"
+                            tick={{ fill: "rgba(249,249,249,0.3)", fontSize: 10 }}
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <YAxis
+                            tick={{ fill: "rgba(249,249,249,0.3)", fontSize: 10 }}
+                            axisLine={false}
+                            tickLine={false}
+                            allowDecimals={false}
+                          />
+                          <Tooltip content={<DarkTooltip />} />
+                          <Bar dataKey="count" name="Antworten" fill="#7FC29B" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
-        </div>
+        )}
+
+        {/* ── Responses tab ──────────────────────────────────────────────── */}
+        {detailTab === "responses" && (
+          <div className="glass-panel" style={{ padding: 0 }}>
+            <div className="relative z-[2]">
+              <div className="px-5 py-4 border-b border-[rgba(249,249,249,0.08)] flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-[#E9CB8B]" />
+                <h2 className="text-[13px] font-medium text-white">
+                  Antworten ({responses.length})
+                </h2>
+              </div>
+              {loadingResponses ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-[rgba(249,249,249,0.3)]" />
+                </div>
+              ) : responses.length === 0 ? (
+                <div className="py-12 text-center">
+                  <MessageSquare className="w-10 h-10 text-[rgba(249,249,249,0.08)] mx-auto mb-3" />
+                  <p className="text-[12px] text-[rgba(249,249,249,0.3)]">Noch keine Antworten für diese Umfrage</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-[rgba(249,249,249,0.05)]">
+                  {responses.map((r) => (
+                    <div key={r.id} className="px-5 py-4 hover:bg-[rgba(249,249,249,0.02)] transition">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[12px] font-medium text-white">
+                            {r.tenants?.company_name || "Unbekannt"}
+                          </span>
+                          {/* CL-160: sentiment badge */}
+                          {r.sentiment && (
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide ${
+                              r.sentiment.toLowerCase() === "positiv"
+                                ? "text-[#7FC29B] bg-[rgba(127,194,155,0.1)] border border-[rgba(127,194,155,0.2)]"
+                                : r.sentiment.toLowerCase() === "negativ"
+                                ? "text-[#E87467] bg-[rgba(232,116,103,0.1)] border border-[rgba(232,116,103,0.2)]"
+                                : "text-[#E9CB8B] bg-[rgba(233,203,139,0.1)] border border-[rgba(233,203,139,0.2)]"
+                            }`}>
+                              {r.sentiment}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-[rgba(249,249,249,0.3)]">
+                          {new Date(r.submitted_at).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {selectedSurvey.questions.map(q => {
+                          const val = r.answers?.[q.id];
+                          if (val === undefined || val === null) return null;
+                          return (
+                            <div key={q.id} className="flex gap-3 text-[12px]">
+                              <span className="text-[rgba(249,249,249,0.35)] shrink-0 max-w-[240px] truncate">{q.question}</span>
+                              <span className="text-[rgba(249,249,249,0.7)] font-medium">
+                                {String(val)}
+                                {q.type === "nps" && (
+                                  <span className={`ml-1.5 text-[9px] ${
+                                    npsCategory(Number(val)) === "promoter" ? "text-[#7FC29B]" :
+                                    npsCategory(Number(val)) === "passive" ? "text-[#E9CB8B]" : "text-[#E87467]"
+                                  }`}>
+                                    ({npsCategory(Number(val))})
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {/* CL-160: theme tags per response */}
+                      {r.theme_tags && r.theme_tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {r.theme_tags.map(tag => (
+                            <span key={tag} className="px-2 py-0.5 rounded-full text-[9px] text-[#E9CB8B] border border-[rgba(197,160,89,0.2)]">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     );
   }

@@ -64,7 +64,6 @@ const OnboardingTrackEditor = lazy(() => import("./pages/admin/OnboardingTrackEd
 const InvitationManager = lazy(() => import("./pages/admin/InvitationManager"));
 const CustomerOverview = lazy(() => import("./pages/admin/CustomerOverview"));
 const UpsellSignalsPage = lazy(() => import("./pages/admin/UpsellSignalsPage"));
-const RecordingPage = lazy(() => import("./pages/advisor/RecordingPage"));
 const OnboardingWizard = lazy(() => import("./pages/onboarding/OnboardingWizard"));
 const SurveyResponsePage = lazy(() => import("./pages/public/SurveyResponsePage"));
 
