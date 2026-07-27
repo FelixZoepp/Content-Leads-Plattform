@@ -50,6 +50,35 @@
 | Erinnerung | Nach 3 Tagen, maximal 2 Erinnerungen |
 | Token | Einmaliger Token-Link, kein Login nötig |
 
+## HeyReach Sync (Edge Function: sync-heyreach)
+
+| Aspekt | Wert |
+|---|---|
+| Trigger | Cron alle 6h oder manuell via Admin Cron Monitor |
+| Scope | Alle Kunden mit HeyReach-Credentials (integration_credentials provider='heyreach') |
+| Daten | kontaktanfragen_versendet, angenommen, antworten, positive_antworten |
+| Ziel | daily_metrics mit source='api:heyreach' |
+| Konflikterkennung | Manuelle Einträge (source='manual') werden NICHT überschrieben |
+| Fehler | sync_jobs Status + error_message, Retry via Job Monitor |
+
+## AI Concierge (Edge Function: ai-concierge)
+
+| Aspekt | Wert |
+|---|---|
+| Trigger | Wöchentlich oder manuell |
+| Signalquellen | 8: metrics, compliance, academy, checklists, onboarding, surveys, content, health |
+| Output | health_scores, ai_insights (top 3 needs), upsell_signals |
+| Prompt-Injection-Schutz | Alle Daten in <user_data> Tags |
+
+## Recording + Transkription (Edge Function: transcribe-and-extract)
+
+| Aspekt | Wert |
+|---|---|
+| Trigger | Manuell nach Recording-Upload |
+| Pipeline | Whisper Transkription → Claude/GPT Dossier-Extraktion → dossier_fields |
+| Consent | Pflicht — recording ohne consent_given_at wird abgelehnt |
+| Löschung | Audio löschbar unabhängig vom Transkript, siehe CONSENT.md |
+
 ## Kosten-Limits
 
 | Provider | Standard-Limit | Aktion bei Überschreitung |
