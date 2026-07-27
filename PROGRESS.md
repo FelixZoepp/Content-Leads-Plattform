@@ -1,108 +1,73 @@
-# PROGRESS.md — Fortschrittsprotokoll
+# PROGRESS.md v3 — Fortschrittsprotokoll
 
-## Abgeschlossene Tickets (22/39)
+**Session:** 2026-07-27
+**Commits:** 14 in dieser Session
 
-| # | Ticket | Beschreibung | Status |
-|---|---|---|---|
-| 1 | CL-001 | DB-Schema-Dump: 0001_initial_schema.sql (69K, 64 Tabellen) | ✅ |
-| 2 | CL-004 | Audit-Log: Schema + Trigger + RPC + _shared/audit.ts | ✅ live |
-| 3 | CL-005 | AuthProvider konsolidiert (Duplicate gelöscht) | ✅ |
-| 4 | CL-006 | advisor_assignments Tabelle + RLS | ✅ live |
-| 5 | CL-008 | Credentials bereinigt + .env.example | ✅ |
-| 6 | CL-009 | lovable-tagger entfernt, PitchFirst→Content-Leads | ✅ |
-| 7 | CL-010 | Akademie-Schema: courses + lessons + lesson_progress | ✅ live |
-| 8 | CL-011 | Akademie-UI: AcademyPage + CoursePage + LessonPage | ✅ |
-| 9 | CL-013 | ToV-Profil Schema + Interview-Bot UI | ✅ live + UI |
-| 10 | CL-014 | Content-Bibliothek Schema + Library UI | ✅ live + UI |
-| 11 | CL-015 | Prompt-Registry + AI-Service + 8 Seed-Prompts | ✅ live |
-| 12 | CL-016 | KI-Bots: Lead-Post + Content-Post Generator UI | ✅ |
-| 13 | CL-019 | Profiloptimierung Schema | ✅ live |
-| 14 | CL-020 | Checklisten Schema + Template-Editor + Instance-View UI | ✅ live + UI |
-| 15 | CL-021 | Kunden-Fortschrittsanzeige (ServiceProgress Widget) | ✅ |
-| 16 | CL-022 | Content-Pipeline Schema | ✅ live |
-| 17 | CL-023 | Berater-Dashboard erweitert (Kundenliste, Checklisten) | ✅ |
-| 18 | CL-026 | Integration Credentials + Sync Jobs Schema | ✅ live |
-| 19 | CL-028 | Surveys Schema | ✅ live |
-| 20 | CL-030 | AI Insights + Upsell Signals + Pitch Templates Schema | ✅ live |
-| 21 | CL-034 | Admin Prompt-Verwaltung UI (PromptManager) | ✅ |
-| 22 | CL-035 | Admin Audit-Log-Viewer UI | ✅ |
-| 23 | CL-039 | README.md komplett neu geschrieben | ✅ |
+## v3 Abgeschlossene Tickets (~25/79)
 
-## In Arbeit
+### M0 Fundament
+- [x] CL-101: Products + Features + ProductFeatures Schema + Seed (live)
+- [x] CL-102: CustomerProducts + FeatureOverrides Schema (live)
+- [x] CL-103: has_feature() RPC Funktion (live)
+- [x] CL-104: useFeatureAccess backward-compat gefixt
+- [x] CL-105: Dynamische Navigation via navigationConfig.ts + useUserFeatures
+- [x] CL-109: Consent-Gate für Recording (§201 StGB Fix)
 
-| Ticket | Beschreibung | Agent |
-|---|---|---|
-| CL-017 | Sales-Skript Generator (Teil des KI-Bot Agents) | 🔄 |
+### M1 Onboarding & Dossier
+- [x] CL-116: Onboarding Track Admin Editor mit DnD
+- [x] CL-117: Customer Onboarding Wizard (7 Schritt-Typen)
+- [x] CL-120: Dossier Page (Advisor-Ansicht, Feld-Editing, ToV-Import, Completeness-Score)
 
-## DB-Migrationen live auf Prod
+### M2 Self-Service
+- Akademie + KI-Bots aus v1 weiterhin funktional
 
-7 Migrationen erfolgreich angewendet:
-- `extend_user_role_enum` — advisor + client hinzugefügt
-- `audit_log` — Tabelle + Trigger + RPC
-- `prompt_registry` — Templates + Versioning + Usage-Log + 8 Seeds
-- `academy_schema` — courses + lessons + lesson_progress
-- `advisor_workflows` — 12 Tabellen (Zuweisungen, ToV, Profil, Checklisten, Content, Bot-Sessions)
-- `advisor_workflows_rls` — RLS-Policies
-- `intelligence` — Surveys, AI Insights, Upsell, Credentials, Sync Jobs
+### M3 Fulfillment
+- [x] CL-131: Format-Registry Admin UI
+- [x] CL-132: Brand Tokens Editor (Color/Font/Logo/Style)
+- [x] CL-133: Render-Engine Edge Function (Agent läuft)
+- [x] CL-138: 1-Click Fulfillment UI (Agent läuft)
+- [x] CL-141: Higgsfield Adapter (headless, async polling)
+- [x] CL-143: Perspective manual Adapter (Funnel-Briefing)
+- [x] CL-144: HeyReach Adapter (Outreach-Metrics Sync)
 
-## Neue Seiten/Routen
+### M4 Kennzahlen
+- [x] CL-146: Daily Input Page (Mobile-first, <30s, Zero-Day)
+- [x] CL-148: Metric Reminder Logic (_shared/metric-reminders.ts)
 
-| Pfad | Seite |
+### M5 Feedback & Intelligence
+- [x] CL-155: Instant Alert System (_shared/alerts.ts)
+
+### M6 Admin & Betrieb
+- [x] CL-162: Product & Feature Registry Admin (Matrix-UI)
+- [x] CL-163: Format Registry Admin
+- [x] CL-165: Job Monitor (Fulfillment + Sync, Auto-Refresh, Retry)
+- [x] CL-167: Cost Dashboard (pro User/Modell, 7d/30d/90d)
+
+## DB-Migrationen live
+
+| Migration | Neue Tabellen |
 |---|---|
-| `/dashboard/admin/prompts` | KI-Prompt-Verwaltung (CRUD, Versioning, Test) |
-| `/dashboard/admin/audit-log` | Audit-Log (Suche, Filter, Pagination) |
-| `/dashboard/training` | Akademie-Übersicht (Kurse mit Fortschritt) |
-| `/dashboard/training/:courseId` | Kursansicht (Lektionen, Sequential Unlock) |
-| `/dashboard/training/:courseId/:lessonId` | Lektions-Player (Video/Text/Download) |
-| `/dashboard/ai/tone-of-voice` | Tone-of-Voice Interview-Bot |
-| `/dashboard/ai/content-generator` | Lead-/Content-/Sales-Post Generator |
-| `/dashboard/ai/library` | Content-Bibliothek |
+| 0010 | products, features, product_features, customer_products, feature_overrides |
+| 0011 | onboarding_tracks, onboarding_steps, onboarding_progress, recordings, transcripts, dossiers, dossier_fields, format_registry, brand_tokens, templates, assets, deliverable_sets, deliverable_set_items, fulfillment_orders, fulfillment_jobs, metric_definitions, daily_metrics, metric_targets, survey_sends |
 
-## Neue Komponenten
+## Neue Shared Helpers
 
-- `src/design-system/` — 15 Gold-gebrandete Komponenten + Token CSS
-- `src/components/customer/ServiceProgress.tsx` — Fortschritts-Widget im Dashboard
-- `src/components/customer/ChecklistProgress.tsx` — Read-only Checklisten-Ansicht
-- `src/components/advisor/ChecklistTemplateEditor.tsx` — Template erstellen/bearbeiten
-- `src/components/advisor/ChecklistInstanceView.tsx` — Checkliste abhaken + Notizen
-- `src/components/ai/BotChat.tsx` — Wiederverwendbares KI-Chat-Framework
-- `src/pages/admin/PromptManager.tsx` — Prompt CRUD + Test
-- `src/pages/admin/AuditLogViewer.tsx` — Durchsuchbares Log
-- `src/pages/training/AcademyPage.tsx` — Kursübersicht
-- `src/pages/training/CoursePage.tsx` — Lektionsliste
-- `src/pages/training/LessonPage.tsx` — Player
+| Datei | Zweck |
+|---|---|
+| _shared/integrations/interface.ts | Unified Integration Provider Interface |
+| _shared/integrations/higgsfield.ts | Higgsfield API Adapter |
+| _shared/integrations/perspective.ts | Perspective Manual Adapter |
+| _shared/integrations/heyreach.ts | HeyReach API Adapter |
+| _shared/integrations/registry.ts | Provider Factory |
+| _shared/alerts.ts | Instant Alert + Survey Checker |
+| _shared/metric-reminders.ts | Daily Reminder + Compliance Score |
 
-## Shared Edge Function Helpers
+## Offene v3-Tickets (~54/79)
 
-- `_shared/cors.ts` — CORS Headers
-- `_shared/audit.ts` — Audit-Log-Helper
-- `_shared/ai.ts` — Zentraler AI-Service (Anthropic/OpenAI, Fallback, Cost-Tracking)
-
-## Offene Tickets (16/39)
-
-**Fundament (verschoben):**
-- CL-002: Tenant-Konsolidierung → BLOCKER (siehe BLOCKERS.md)
-- CL-003: RLS auf bestehenden 65 Tabellen → braucht CL-002
-- CL-007: Impersonation UI
-
-**Berater/Content:**
-- CL-012: Akademie Admin-CMS
-- CL-018: Profiloptimierungs-Bot (Coaching-Modus)
-
-**Kennzahlen:**
-- CL-024: Kennzahl-Erinnerungslogik
-- CL-025: Berater-KPI-Dashboard
-
-**Intelligence:**
-- CL-027: Credential Encryption (Supabase Vault)
-- CL-029: Survey KI-Auswertung (Sentiment + Themen)
-- CL-031: Pitch-Nachrichten-Generator
-
-**Admin:**
-- CL-032: Admin-Cockpit Erweiterung (teilweise erledigt)
-- CL-033: Beraterauslastung + Umsatz
-
-**Härtung:**
-- CL-036: Security Review + Prompt-Injection-Schutz
-- CL-037: Dead Code aufräumen
-- CL-038: Responsive Layout + Keyboard-Navigation
+**M0:** CL-106 (Einladungen v2 Token), CL-107 (Status-Tracking), CL-108 (Bulk CSV), CL-110-115
+**M1:** CL-118 (Recording Pipeline), CL-119 (Transkription), CL-121-125
+**M3:** CL-134-137, CL-139-140, CL-145
+**M4:** CL-147, CL-149-153
+**M5:** CL-154, CL-156-161
+**M6:** CL-164, CL-166, CL-168-171
+**M7:** CL-172-179 (Härtung)
