@@ -56,8 +56,10 @@ const SurveyManager = lazy(() => import("./pages/admin/SurveyManager"));
 const PitchGenerator = lazy(() => import("./pages/admin/PitchGenerator"));
 const FormatRegistryPage = lazy(() => import("./pages/admin/FormatRegistryPage"));
 const JobMonitor = lazy(() => import("./pages/admin/JobMonitor"));
+const FeatureFlags = lazy(() => import("./pages/admin/FeatureFlags"));
 const OnboardingTrackEditor = lazy(() => import("./pages/admin/OnboardingTrackEditor"));
 const OnboardingWizard = lazy(() => import("./pages/onboarding/OnboardingWizard"));
+const SurveyResponsePage = lazy(() => import("./pages/public/SurveyResponsePage"));
 
 // AI Tools
 const ToneOfVoicePage = lazy(() => import("./pages/ai/ToneOfVoicePage"));
@@ -157,6 +159,7 @@ function DashboardRoutes() {
           <Route path="admin/pitch-generator" element={<PitchGenerator />} />
           <Route path="admin/formats" element={<FormatRegistryPage />} />
           <Route path="admin/jobs" element={<JobMonitor />} />
+          <Route path="admin/feature-flags" element={<FeatureFlags />} />
           <Route path="admin/onboarding-tracks" element={<OnboardingTrackEditor />} />
           <Route path="onboarding" element={<OnboardingWizard />} />
           <Route path="advisor" element={<AdvisorDashboard />} />
@@ -192,6 +195,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/survey" element={<SurveyResponsePage />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>

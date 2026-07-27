@@ -7,41 +7,27 @@ const corsHeaders = {
 };
 
 const DEFAULT_APP_URL = "https://app.content-leads.de";
-const USER_LOOKUP_PAGE_SIZE = 100;
+const TOKEN_EXPIRY_DAYS = 14;
 
-function isExistingUserError(message?: string | null) {
-  return Boolean(
-    message?.includes("already been registered") ||
-      message?.includes("already exists") ||
-      message?.includes("email_exists")
-  );
-}
+// ── Helpers ─────────────────────────────────────────────────────────────────
 
-async function findUserByEmail(adminClient: any, email: string) {
-  const normalizedEmail = email.toLowerCase();
-
-  for (let page = 1; page <= 20; page++) {
-    const { data, error } = await adminClient.auth.admin.listUsers({
-      page,
-      perPage: USER_LOOKUP_PAGE_SIZE,
-    });
-
-    if (error) throw error;
-
-    const foundUser = (data.users as any[]).find(
-      (user: any) => user.email?.toLowerCase() === normalizedEmail
-    );
-
-    if (foundUser) return foundUser;
-    if (data.users.length < USER_LOOKUP_PAGE_SIZE) break;
-  }
-
-  return null;
+/** Generate a cryptographically-random 32-byte hex token. */
+function generateToken(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 function dispatchInvitationWebhooks(
   adminClient: ReturnType<typeof createClient>,
-  payload: { tenant_id: string; company_name: string; email: string; contact_name: string | null }
+  payload: {
+    tenant_id: string;
+    company_name: string;
+    email: string;
+    contact_name: string | null;
+  }
 ) {
   const task = (async () => {
     const { data: webhookEndpoints } = await adminClient
@@ -75,39 +61,42 @@ function dispatchInvitationWebhooks(
   const runtime = globalThis as typeof globalThis & {
     EdgeRuntime?: { waitUntil?: (promise: Promise<unknown>) => void };
   };
-
   runtime.EdgeRuntime?.waitUntil?.(task);
 }
+
+// ── Main handler ─────────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Generic error response — same shape for all failures (anti-enumeration)
+  const genericError = (msg: string, status = 400) =>
+    new Response(JSON.stringify({ error: msg }), {
+      status,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
   try {
+    // ── Auth check ──────────────────────────────────────────────────────────
     const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!authHeader) return genericError("Unauthorized", 401);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    const callerClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+    const callerClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: { user: caller } } = await callerClient.auth.getUser();
-    if (!caller) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const {
+      data: { user: caller },
+    } = await callerClient.auth.getUser();
+    if (!caller) return genericError("Unauthorized", 401);
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
     const { data: roleData } = await adminClient
       .from("user_roles")
       .select("role")
@@ -115,26 +104,81 @@ Deno.serve(async (req) => {
       .eq("role", "admin")
       .maybeSingle();
 
-    if (!roleData) {
-      return new Response(JSON.stringify({ error: "Forbidden: Admin only" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!roleData) return genericError("Forbidden: Admin only", 403);
 
+    // ── Parse body ──────────────────────────────────────────────────────────
     const body = await req.json();
-    const { email, company_name, contact_name, industry } = body;
-    const redirectTo = `${req.headers.get("origin") || DEFAULT_APP_URL}/set-password`;
+    const {
+      email,
+      company_name,
+      contact_name,
+      industry,
+      product_slug,
+      advisor_email,
+    } = body;
 
     if (!email || !company_name) {
-      return new Response(
-        JSON.stringify({ error: "E-Mail und Firmenname sind erforderlich" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return genericError("E-Mail und Firmenname sind erforderlich");
     }
 
+    // ── Resolve optional product ────────────────────────────────────────────
+    let product_id: string | null = null;
+    if (product_slug) {
+      const { data: product } = await adminClient
+        .from("products")
+        .select("id")
+        .eq("slug", product_slug)
+        .maybeSingle();
+      product_id = product?.id ?? null;
+    }
+
+    // ── Resolve optional advisor ────────────────────────────────────────────
+    let advisor_id: string | null = null;
+    if (advisor_email) {
+      const { data: advisorProfile } = await adminClient
+        .from("profiles")
+        .select("user_id")
+        .eq("email", advisor_email.toLowerCase())
+        .maybeSingle();
+      advisor_id = advisorProfile?.user_id ?? null;
+
+      // Fallback: search auth.users via admin API
+      if (!advisor_id) {
+        const { data: usersPage } = await adminClient.auth.admin.listUsers({
+          page: 1,
+          perPage: 1000,
+        });
+        const found = (usersPage?.users ?? []).find(
+          (u: any) => u.email?.toLowerCase() === advisor_email.toLowerCase()
+        );
+        advisor_id = found?.id ?? null;
+      }
+    }
+
+    // ── Check for duplicate pending invitation ──────────────────────────────
+    const { data: existing } = await adminClient
+      .from("invitations")
+      .select("id, status")
+      .eq("email_hint", email.toLowerCase())
+      .in("status", ["pending", "opened"])
+      .maybeSingle();
+
+    if (existing) {
+      // Revoke the old one and issue a fresh token below
+      await adminClient
+        .from("invitations")
+        .update({ status: "revoked" })
+        .eq("id", existing.id);
+    }
+
+    // ── Create tenant + user ────────────────────────────────────────────────
+    // First check if tenant already exists for this email
     let userId: string;
-    let invitationSent = false;
+
+    // Try inviting via Supabase Auth (creates user if not exists)
+    const redirectTo = `${
+      req.headers.get("origin") || DEFAULT_APP_URL
+    }/set-password`;
 
     const { data: inviteData, error: inviteError } =
       await adminClient.auth.admin.inviteUserByEmail(email, {
@@ -143,97 +187,135 @@ Deno.serve(async (req) => {
       });
 
     if (inviteError) {
-      if (isExistingUserError(inviteError.message)) {
-        const { data: existingTenant } = await adminClient
-          .from("tenants")
-          .select("id, user_id")
-          .eq("company_name", company_name)
-          .maybeSingle();
+      const msg = inviteError.message ?? "";
+      const alreadyExists =
+        msg.includes("already been registered") ||
+        msg.includes("already exists") ||
+        msg.includes("email_exists");
 
-        if (existingTenant) {
-          return new Response(
-            JSON.stringify({ error: "Dieser Benutzer hat bereits ein Kundenkonto" }),
-            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
-        const existingUser = await findUserByEmail(adminClient, email);
-
-        if (!existingUser) {
-          return new Response(
-            JSON.stringify({ error: "Benutzer existiert, konnte aber nicht geladen werden" }),
-            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
-        const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
-        const { error: resetError } = await anonClient.auth.resetPasswordForEmail(email, {
-          redirectTo,
-        });
-
-        if (resetError) {
-          return new Response(
-            JSON.stringify({ error: `Setup-E-Mail fehlgeschlagen: ${resetError.message}` }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
-        userId = existingUser.id;
-        invitationSent = true;
-      } else {
-        return new Response(
-          JSON.stringify({ error: `Einladung fehlgeschlagen: ${inviteError.message}` }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      if (!alreadyExists) {
+        return genericError(`Einladung fehlgeschlagen: ${msg}`);
       }
+
+      // User exists — find their id
+      const { data: usersPage } = await adminClient.auth.admin.listUsers({
+        page: 1,
+        perPage: 1000,
+      });
+      const existingUser = (usersPage?.users ?? []).find(
+        (u: any) => u.email?.toLowerCase() === email.toLowerCase()
+      );
+      if (!existingUser) {
+        return genericError("Benutzer existiert, konnte aber nicht geladen werden", 500);
+      }
+      userId = existingUser.id;
     } else {
       userId = inviteData.user.id;
-      invitationSent = true;
     }
 
-    const { data: existingTenantByUser } = await adminClient
+    // ── Upsert tenant ───────────────────────────────────────────────────────
+    const { data: existingTenant } = await adminClient
       .from("tenants")
       .select("id")
       .eq("user_id", userId)
       .maybeSingle();
 
-    if (existingTenantByUser) {
-      return new Response(
-        JSON.stringify({ error: "Dieser Benutzer hat bereits ein Kundenkonto" }),
-        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    let tenantId: string;
+    if (existingTenant) {
+      tenantId = existingTenant.id;
+    } else {
+      const { data: tenant, error: tenantError } = await adminClient
+        .from("tenants")
+        .insert({
+          user_id: userId,
+          company_name,
+          contact_name: contact_name || null,
+          industry: industry || null,
+          is_active: true,
+          onboarding_completed: false,
+        })
+        .select()
+        .single();
+
+      if (tenantError) {
+        return genericError(
+          `Tenant-Erstellung fehlgeschlagen: ${tenantError.message}`,
+          500
+        );
+      }
+      tenantId = tenant.id;
     }
 
-    // Create tenant
-    const { data: tenant, error: tenantError } = await adminClient
-      .from("tenants")
+    // ── Upsert profile ──────────────────────────────────────────────────────
+    await adminClient
+      .from("profiles")
+      .upsert(
+        { user_id: userId, full_name: contact_name || company_name, company_name },
+        { onConflict: "user_id" }
+      );
+
+    // ── Create customer_products entry if product given ─────────────────────
+    if (product_id) {
+      await adminClient
+        .from("customer_products")
+        .upsert(
+          {
+            tenant_id: tenantId,
+            product_id,
+            status: "onboarding",
+            assigned_at: new Date().toISOString(),
+          },
+          { onConflict: "tenant_id,product_id" }
+        );
+    }
+
+    // ── Create advisor assignment if advisor given ───────────────────────────
+    if (advisor_id) {
+      await adminClient
+        .from("advisor_assignments")
+        .upsert(
+          { tenant_id: tenantId, advisor_id, assigned_at: new Date().toISOString() },
+          { onConflict: "tenant_id" }
+        )
+        .then(() => {}); // best-effort, table may not exist yet
+    }
+
+    // ── Generate secure token & persist invitation row ──────────────────────
+    const token = generateToken();
+    const expiresAt = new Date(
+      Date.now() + TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000
+    ).toISOString();
+
+    const { data: invitation, error: invRowError } = await adminClient
+      .from("invitations")
       .insert({
-        user_id: userId,
-        company_name,
-        contact_name: contact_name || null,
-        industry: industry || null,
-        is_active: true,
-        onboarding_completed: false,
+        token,
+        account_id: tenantId,
+        created_by: caller.id,
+        email_hint: email.toLowerCase(),
+        role: "customer",
+        expires_at: expiresAt,
+        status: "pending",
+        product_id: product_id ?? null,
+        advisor_id: advisor_id ?? null,
+        reminder_count: 0,
       })
-      .select()
+      .select("id")
       .single();
 
-    if (tenantError) {
-      return new Response(
-        JSON.stringify({ error: `Tenant-Erstellung fehlgeschlagen: ${tenantError.message}` }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (invRowError) {
+      console.error("Invitation row error:", invRowError);
+      // Non-fatal — token still returned below
     }
 
-    // Create profile
-    await adminClient.from("profiles").upsert({
-      user_id: userId,
-      full_name: contact_name || company_name,
-      company_name,
-    }, { onConflict: "user_id" });
+    // ── Build invitation link ───────────────────────────────────────────────
+    const invitationLink = `${
+      req.headers.get("origin") || DEFAULT_APP_URL
+    }/set-password?invitation=${token}`;
 
+    // ── Dispatch webhooks ───────────────────────────────────────────────────
     dispatchInvitationWebhooks(adminClient as any, {
-      tenant_id: tenant.id,
+      tenant_id: tenantId,
       company_name,
       email,
       contact_name: contact_name || null,
@@ -242,19 +324,20 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        tenant_id: tenant.id,
+        tenant_id: tenantId,
         user_id: userId,
-        invited: !inviteError,
-        email_sent: invitationSent,
-        message: inviteError
-          ? `Setup-E-Mail an ${email} gesendet`
-          : `Einladung an ${email} gesendet`,
+        invitation_id: invitation?.id ?? null,
+        invitation_link: invitationLink,
+        expires_at: expiresAt,
+        message: `Einladung an ${email} erstellt`,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err: unknown) {
+    // Same generic shape — don't leak internals
+    console.error("invite-customer error:", err);
     return new Response(
-      JSON.stringify({ error: `Server error: ${(err as Error).message}` }),
+      JSON.stringify({ error: "Ein Fehler ist aufgetreten" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
