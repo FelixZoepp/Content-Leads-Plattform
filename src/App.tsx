@@ -48,6 +48,7 @@ const DossierPage = lazy(() => import("./pages/advisor/DossierPage"));
 const BrandTokensPage = lazy(() => import("./pages/advisor/BrandTokensPage"));
 const FulfillmentPage = lazy(() => import("./pages/advisor/FulfillmentPage"));
 const ReviewQueue = lazy(() => import("./pages/advisor/ReviewQueue"));
+const RecordingPage = lazy(() => import("./pages/advisor/RecordingPage"));
 const PromptManager = lazy(() => import("./pages/admin/PromptManager"));
 const AuditLogViewer = lazy(() => import("./pages/admin/AuditLogViewer"));
 const AcademyCMS = lazy(() => import("./pages/admin/AcademyCMS"));
@@ -63,6 +64,7 @@ const OnboardingTrackEditor = lazy(() => import("./pages/admin/OnboardingTrackEd
 const InvitationManager = lazy(() => import("./pages/admin/InvitationManager"));
 const CustomerOverview = lazy(() => import("./pages/admin/CustomerOverview"));
 const UpsellSignalsPage = lazy(() => import("./pages/admin/UpsellSignalsPage"));
+const RecordingPage = lazy(() => import("./pages/advisor/RecordingPage"));
 const OnboardingWizard = lazy(() => import("./pages/onboarding/OnboardingWizard"));
 const SurveyResponsePage = lazy(() => import("./pages/public/SurveyResponsePage"));
 
@@ -176,6 +178,7 @@ function DashboardRoutes() {
           <Route path="advisor/dossier/:userId" element={<DossierPage />} />
           <Route path="advisor/brand/:userId" element={<BrandTokensPage />} />
           <Route path="advisor/fulfillment/:userId" element={<FulfillmentPage />} />
+          <Route path="advisor/recording/:userId" element={<RecordingPage />} />
           <Route path="advisor/review" element={<ReviewQueue />} />
           <Route path="metrics/daily" element={<DailyInputPage />} />
           <Route path="settings" element={<Settings />} />
