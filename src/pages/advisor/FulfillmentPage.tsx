@@ -22,6 +22,7 @@ import {
   CheckCheck,
   Image as ImageIcon,
 } from "lucide-react";
+import CompletenessGate from "@/components/advisor/CompletenessGate";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -519,6 +520,14 @@ export default function FulfillmentPage() {
           )}
         </div>
       </div>
+
+      {/* ── CL-123: Completeness Gate ───────────────────────────────────────── */}
+      {dossierCompleteness < 80 && (
+        <CompletenessGate
+          completenessScore={dossierCompleteness}
+          missingFieldKeys={missingFields}
+        />
+      )}
 
       {/* ── Messages ───────────────────────────────────────────────────────── */}
       {error && (

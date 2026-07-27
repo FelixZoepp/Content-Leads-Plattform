@@ -64,6 +64,9 @@ const OnboardingTrackEditor = lazy(() => import("./pages/admin/OnboardingTrackEd
 const InvitationManager = lazy(() => import("./pages/admin/InvitationManager"));
 const CustomerOverview = lazy(() => import("./pages/admin/CustomerOverview"));
 const UpsellSignalsPage = lazy(() => import("./pages/admin/UpsellSignalsPage"));
+const TemplateCMS = lazy(() => import("./pages/admin/TemplateCMS"));
+const DeliverableSetsCMS = lazy(() => import("./pages/admin/DeliverableSetsCMS"));
+const AssetBrowser = lazy(() => import("./pages/advisor/AssetBrowser"));
 const CronMonitor = lazy(() => import("./pages/admin/CronMonitor"));
 const OnboardingWizard = lazy(() => import("./pages/onboarding/OnboardingWizard"));
 const SurveyResponsePage = lazy(() => import("./pages/public/SurveyResponsePage"));
@@ -173,6 +176,8 @@ function DashboardRoutes() {
           <Route path="admin/customers" element={<CustomerOverview />} />
           <Route path="admin/upsell-signals" element={<UpsellSignalsPage />} />
           <Route path="admin/metrics" element={<MetricRegistryPage />} />
+          <Route path="admin/templates" element={<TemplateCMS />} />
+          <Route path="admin/deliverable-sets" element={<DeliverableSetsCMS />} />
           <Route path="onboarding" element={<OnboardingWizard />} />
           <Route path="advisor" element={<AdvisorDashboard />} />
           <Route path="advisor/kpis" element={<AdvisorKPIPage />} />
@@ -181,6 +186,7 @@ function DashboardRoutes() {
           <Route path="advisor/fulfillment/:userId" element={<FulfillmentPage />} />
           <Route path="advisor/recording/:userId" element={<RecordingPage />} />
           <Route path="advisor/review" element={<ReviewQueue />} />
+          <Route path="advisor/assets/:userId" element={<AssetBrowser />} />
           <Route path="metrics/daily" element={<DailyInputPage />} />
           <Route path="settings" element={<Settings />} />
           <Route path="support" element={<Support />} />
