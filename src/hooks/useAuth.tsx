@@ -3,6 +3,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 const IMPERSONATION_KEY = "cl_impersonation";
+const IMPERSONATION_MAX_MINUTES = 60; // CL-110: Auto-expire after 60 minutes
 
 interface ImpersonationState {
   targetUserId: string;
@@ -11,6 +12,7 @@ interface ImpersonationState {
   adminTenantId: string | null;
   adminAccountId: string | null;
   targetName: string | null;
+  startedAt: number; // CL-110: timestamp for timeout
 }
 
 interface AuthContextType {
@@ -73,12 +75,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (stored) {
           try {
             const imp = JSON.parse(stored) as ImpersonationState;
-            // Only restore if the stored admin ID matches the current user
-            if (imp.adminUserId === s.user.id) {
+            // CL-110: Auto-expire after IMPERSONATION_MAX_MINUTES
+            const elapsed = (Date.now() - (imp.startedAt || 0)) / 60000;
+            if (elapsed > IMPERSONATION_MAX_MINUTES) {
+              sessionStorage.removeItem(IMPERSONATION_KEY);
+              console.log(`Impersonation expired after ${Math.round(elapsed)}min`);
+            } else if (imp.adminUserId === s.user.id) {
               setImpersonating(true);
               setImpersonatedUserId(imp.targetUserId);
               setImpersonatedUserName(imp.targetName);
-              setUserRole(null); // will be set by restoreImpersonationProfile
+              setUserRole(null);
               setTimeout(() => { if (mounted) restoreImpersonationProfile(imp); }, 0);
               return;
             } else {
@@ -240,6 +246,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         adminTenantId: tenantId,
         adminAccountId: accountId,
         targetName,
+        startedAt: Date.now(), // CL-110: timestamp for auto-expiry
       };
       sessionStorage.setItem(IMPERSONATION_KEY, JSON.stringify(imp));
 

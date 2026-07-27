@@ -13,6 +13,9 @@ import {
   ChevronUp,
   RefreshCw,
   Layers,
+  AlertTriangle,
+  Copy,
+  RotateCcw,
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -23,6 +26,8 @@ interface Dossier {
   status: string | null;
   approved_by: string | null;
   approved_at: string | null;
+  version: number;
+  parent_dossier_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -34,6 +39,7 @@ interface DossierField {
   value_text: string | null;
   source: string | null;
   confidence: number | null;
+  conflict_with: string | null;
   updated_at: string;
 }
 
@@ -65,7 +71,6 @@ const CATEGORIES: Category[] = [
 
 const ALL_KEYS = CATEGORIES.flatMap((c) => c.keys);
 
-// human-readable field labels
 const FIELD_LABELS: Record<string, string> = {
   angebot: "Angebot",
   preismodell: "Preismodell",
@@ -138,6 +143,103 @@ function ConfidenceBar({ value }: { value: number | null }) {
   );
 }
 
+// ── Conflict panel ────────────────────────────────────────────────────────────
+
+interface ConflictPanelProps {
+  field: DossierField;
+  allFields: DossierField[];
+  onResolve: (fieldId: string) => void;
+  resolving: boolean;
+}
+
+function ConflictPanel({ field, allFields, onResolve, resolving }: ConflictPanelProps) {
+  const [open, setOpen] = useState(false);
+  const conflictingField = allFields.find((f) => f.id === field.conflict_with);
+
+  return (
+    <div>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-[0.08em] transition-colors"
+        style={{
+          color: "#E9CB8B",
+          background: "rgba(233,203,139,0.1)",
+          border: "1px solid rgba(233,203,139,0.3)",
+        }}
+      >
+        <AlertTriangle className="w-2.5 h-2.5" />
+        Konflikt
+      </button>
+
+      {open && (
+        <div
+          className="mt-2 rounded-xl p-3 space-y-3"
+          style={{
+            background: "rgba(233,203,139,0.06)",
+            border: "1px solid rgba(233,203,139,0.2)",
+          }}
+        >
+          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#E9CB8B]">
+            Konflikt — zwei Werte vorhanden
+          </p>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div
+              className="rounded-lg p-2"
+              style={{
+                background: "rgba(197,160,89,0.08)",
+                border: "1px solid rgba(197,160,89,0.2)",
+              }}
+            >
+              <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-[#E9CB8B] mb-1">
+                Dieser Wert
+              </p>
+              <p className="text-[12px] text-[rgba(249,249,249,0.85)] leading-relaxed break-words">
+                {field.value_text || "—"}
+              </p>
+              <p className="text-[9px] text-[rgba(249,249,249,0.3)] mt-1">
+                Quelle: {field.source ?? "—"}
+              </p>
+            </div>
+
+            <div
+              className="rounded-lg p-2"
+              style={{
+                background: "rgba(249,249,249,0.03)",
+                border: "1px solid rgba(249,249,249,0.08)",
+              }}
+            >
+              <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-[rgba(249,249,249,0.4)] mb-1">
+                Konfliktierender Wert
+              </p>
+              <p className="text-[12px] text-[rgba(249,249,249,0.7)] leading-relaxed break-words">
+                {conflictingField?.value_text || "—"}
+              </p>
+              <p className="text-[9px] text-[rgba(249,249,249,0.3)] mt-1">
+                Quelle: {conflictingField?.source ?? "—"}
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => onResolve(field.id)}
+            disabled={resolving}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all"
+            style={{
+              background: "linear-gradient(135deg, #C5A059, #E9CB8B)",
+              color: "#0A0B0B",
+              opacity: resolving ? 0.6 : 1,
+            }}
+          >
+            <CheckCircle2 className="w-3 h-3" />
+            {resolving ? "Wird aufgelöst…" : "Diesen Wert verwenden (Konflikt auflösen)"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function DossierPage() {
@@ -146,15 +248,19 @@ export default function DossierPage() {
 
   const [dossier, setDossier] = useState<Dossier | null>(null);
   const [fields, setFields] = useState<DossierField[]>([]);
+  const [approverName, setApproverName] = useState<string>("");
   const [customerName, setCustomerName] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [approving, setApproving] = useState(false);
+  const [revoking, setRevoking] = useState(false);
   const [importingTov, setImportingTov] = useState(false);
+  const [creatingVersion, setCreatingVersion] = useState(false);
+  const [resolvingConflict, setResolvingConflict] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // per-field edit state: fieldKey → draft value
+  // per-field edit state
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<string>("");
 
@@ -169,7 +275,6 @@ export default function DossierPage() {
     setError(null);
 
     try {
-      // customer name
       const { data: profile } = await (supabase as any)
         .from("profiles")
         .select("full_name, email")
@@ -177,7 +282,6 @@ export default function DossierPage() {
         .maybeSingle();
       setCustomerName(profile?.full_name || profile?.email || userId.slice(0, 8));
 
-      // latest dossier for user
       const { data: dos, error: dosErr } = await (supabase as any)
         .from("dossiers")
         .select("*")
@@ -197,7 +301,18 @@ export default function DossierPage() {
 
       setDossier(dos as Dossier);
 
-      // load fields
+      // load approver name if approved
+      if (dos.approved_by) {
+        const { data: approver } = await (supabase as any)
+          .from("profiles")
+          .select("full_name, email")
+          .eq("id", dos.approved_by)
+          .maybeSingle();
+        setApproverName(approver?.full_name || approver?.email || dos.approved_by.slice(0, 8));
+      } else {
+        setApproverName("");
+      }
+
       const { data: flds, error: fldsErr } = await (supabase as any)
         .from("dossier_fields")
         .select("*")
@@ -232,7 +347,7 @@ export default function DossierPage() {
     try {
       const { data, error: err } = await (supabase as any)
         .from("dossiers")
-        .insert({ user_id: userId, status: "draft" })
+        .insert({ user_id: userId, status: "draft", version: 1 })
         .select()
         .single();
       if (err) throw err;
@@ -304,11 +419,107 @@ export default function DossierPage() {
         .single();
       if (err) throw err;
       setDossier(data as Dossier);
+      setApproverName(""); // will reload
+      await load();
       flash("Dossier freigegeben.");
     } catch (err: any) {
       setError(err?.message || "Fehler beim Freigeben.");
     } finally {
       setApproving(false);
+    }
+  }
+
+  // ── Revoke approval ─────────────────────────────────────────────────────────
+
+  async function revokeApproval() {
+    if (!dossier) return;
+    setRevoking(true);
+    setError(null);
+    try {
+      const { data, error: err } = await (supabase as any)
+        .from("dossiers")
+        .update({
+          status: "draft",
+          approved_by: null,
+          approved_at: null,
+        })
+        .eq("id", dossier.id)
+        .select()
+        .single();
+      if (err) throw err;
+      setDossier(data as Dossier);
+      setApproverName("");
+      flash("Freigabe zurückgenommen.");
+    } catch (err: any) {
+      setError(err?.message || "Fehler beim Zurücknehmen.");
+    } finally {
+      setRevoking(false);
+    }
+  }
+
+  // ── Create new version ──────────────────────────────────────────────────────
+
+  async function createNewVersion() {
+    if (!dossier || !userId) return;
+    setCreatingVersion(true);
+    setError(null);
+    try {
+      const newVersion = (dossier.version ?? 1) + 1;
+      const { data: newDos, error: dosErr } = await (supabase as any)
+        .from("dossiers")
+        .insert({
+          user_id: userId,
+          status: "draft",
+          version: newVersion,
+          parent_dossier_id: dossier.id,
+        })
+        .select()
+        .single();
+      if (dosErr) throw dosErr;
+
+      // duplicate all fields into new dossier
+      if (fields.length > 0) {
+        const copies = fields.map(({ field_key, value_text, source, confidence }) => ({
+          dossier_id: newDos.id,
+          field_key,
+          value_text,
+          source,
+          confidence,
+        }));
+        const { error: copyErr } = await (supabase as any)
+          .from("dossier_fields")
+          .insert(copies);
+        if (copyErr) throw copyErr;
+      }
+
+      await load();
+      flash(`Version ${newVersion} erstellt.`);
+    } catch (err: any) {
+      setError(err?.message || "Fehler beim Erstellen der neuen Version.");
+    } finally {
+      setCreatingVersion(false);
+    }
+  }
+
+  // ── Resolve conflict ────────────────────────────────────────────────────────
+
+  async function resolveConflict(fieldId: string) {
+    setResolvingConflict(true);
+    setError(null);
+    try {
+      const { data, error: err } = await (supabase as any)
+        .from("dossier_fields")
+        .update({ conflict_with: null })
+        .eq("id", fieldId)
+        .select()
+        .single();
+      if (err) throw err;
+      setFields((prev) => prev.map((f) => (f.id === fieldId ? (data as DossierField) : f)));
+      flash("Konflikt aufgelöst.");
+    } catch (err: any) {
+      setError(err?.message || "Fehler beim Auflösen des Konflikts.");
+    } finally {
+      setResolvingConflict(false);
     }
   }
 
@@ -454,6 +665,8 @@ export default function DossierPage() {
   // ── Dossier view ────────────────────────────────────────────────────────────
 
   const isApproved = dossier.status === "approved";
+  const version = dossier.version ?? 1;
+  const conflictCount = fields.filter((f) => f.conflict_with).length;
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -463,7 +676,7 @@ export default function DossierPage() {
         className="glass-panel fade-up"
         style={{
           background: "linear-gradient(135deg, rgba(197,160,89,0.14), rgba(10,11,11,0.6))",
-          borderColor: "rgba(197,160,89,0.2)",
+          borderColor: isApproved ? "rgba(127,194,155,0.25)" : "rgba(197,160,89,0.2)",
         }}
       >
         <div className="relative z-[2] flex items-start justify-between gap-4 flex-wrap">
@@ -474,7 +687,8 @@ export default function DossierPage() {
             <h1 className="text-2xl text-white" style={{ fontFamily: "var(--font-serif)" }}>
               {customerName}<span className="text-[#C5A059]">.</span>
             </h1>
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+              {/* Status badge */}
               <span
                 className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-[0.1em]"
                 style={{
@@ -483,11 +697,40 @@ export default function DossierPage() {
                   border: `1px solid ${isApproved ? "#7FC29B40" : "#E9CB8B40"}`,
                 }}
               >
-                {isApproved ? "Freigegeben" : "Entwurf"}
+                {isApproved ? "✓ Freigegeben" : "Entwurf"}
               </span>
-              {dossier.approved_at && (
-                <span className="text-[11px] text-[rgba(249,249,249,0.3)]">
-                  {new Date(dossier.approved_at).toLocaleDateString("de-DE")}
+
+              {/* Version badge */}
+              <span
+                className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-[0.1em]"
+                style={{
+                  color: "rgba(249,249,249,0.45)",
+                  background: "rgba(249,249,249,0.05)",
+                  border: "1px solid rgba(249,249,249,0.1)",
+                }}
+              >
+                v{version}
+              </span>
+
+              {/* Approver + timestamp */}
+              {isApproved && dossier.approved_at && (
+                <span className="text-[11px] text-[rgba(249,249,249,0.35)]">
+                  von {approverName || "…"} · {new Date(dossier.approved_at).toLocaleDateString("de-DE")}
+                </span>
+              )}
+
+              {/* Conflict indicator */}
+              {conflictCount > 0 && (
+                <span
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-[0.1em]"
+                  style={{
+                    color: "#E9CB8B",
+                    background: "rgba(233,203,139,0.1)",
+                    border: "1px solid rgba(233,203,139,0.3)",
+                  }}
+                >
+                  <AlertTriangle className="w-2.5 h-2.5" />
+                  {conflictCount} Konflikt{conflictCount !== 1 ? "e" : ""}
                 </span>
               )}
             </div>
@@ -514,10 +757,42 @@ export default function DossierPage() {
               }}
             >
               <Layers className="w-3.5 h-3.5" />
-              {importingTov ? "Importiere…" : "Aus ToV-Profil übernehmen"}
+              {importingTov ? "Importiere…" : "Aus ToV-Profil"}
             </button>
 
-            {!isApproved && (
+            {/* New version button */}
+            <button
+              onClick={createNewVersion}
+              disabled={creatingVersion}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-medium border transition-colors"
+              style={{
+                color: "rgba(249,249,249,0.6)",
+                border: "1px solid rgba(249,249,249,0.1)",
+                background: "rgba(249,249,249,0.04)",
+                opacity: creatingVersion ? 0.6 : 1,
+              }}
+            >
+              <Copy className="w-3.5 h-3.5" />
+              {creatingVersion ? "Erstelle…" : "Neue Version"}
+            </button>
+
+            {/* Approve / Revoke */}
+            {isApproved ? (
+              <button
+                onClick={revokeApproval}
+                disabled={revoking}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold transition-all border"
+                style={{
+                  color: "#E87467",
+                  border: "1px solid rgba(232,116,103,0.3)",
+                  background: "rgba(232,116,103,0.08)",
+                  opacity: revoking ? 0.6 : 1,
+                }}
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                {revoking ? "Wird zurückgenommen…" : "Freigabe zurücknehmen"}
+              </button>
+            ) : (
               <button
                 onClick={approveDossier}
                 disabled={approving}
@@ -603,7 +878,6 @@ export default function DossierPage() {
             className="glass-panel fade-up"
             style={{ animationDelay: `${catIdx * 60}ms` }}
           >
-            {/* Category header */}
             <button
               onClick={() => toggleCategory(cat.label)}
               className="relative z-[2] w-full flex items-center justify-between"
@@ -635,12 +909,12 @@ export default function DossierPage() {
               )}
             </button>
 
-            {/* Fields */}
             {isOpen && (
               <div className="relative z-[2] mt-4 space-y-3">
                 {cat.keys.map((fieldKey) => {
                   const field = fields.find((f) => f.field_key === fieldKey);
                   const isEditing = editingKey === fieldKey;
+                  const hasConflict = !!field?.conflict_with;
 
                   return (
                     <div
@@ -649,8 +923,16 @@ export default function DossierPage() {
                       style={{
                         background: isEditing
                           ? "rgba(197,160,89,0.06)"
+                          : hasConflict
+                          ? "rgba(233,203,139,0.04)"
                           : "rgba(249,249,249,0.025)",
-                        border: `1px solid ${isEditing ? "rgba(197,160,89,0.25)" : "rgba(249,249,249,0.06)"}`,
+                        border: `1px solid ${
+                          isEditing
+                            ? "rgba(197,160,89,0.25)"
+                            : hasConflict
+                            ? "rgba(233,203,139,0.2)"
+                            : "rgba(249,249,249,0.06)"
+                        }`,
                       }}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -677,10 +959,7 @@ export default function DossierPage() {
                               }}
                               rows={3}
                               className="w-full bg-transparent text-[13px] text-white resize-none outline-none"
-                              style={{
-                                border: "none",
-                                color: "rgba(249,249,249,0.9)",
-                              }}
+                              style={{ border: "none", color: "rgba(249,249,249,0.9)" }}
                             />
                           ) : (
                             <p
@@ -695,9 +974,20 @@ export default function DossierPage() {
                               {field?.value_text || "—"}
                             </p>
                           )}
+
+                          {/* CL-122: Conflict panel */}
+                          {hasConflict && field && !isEditing && (
+                            <div className="mt-2">
+                              <ConflictPanel
+                                field={field}
+                                allFields={fields}
+                                onResolve={resolveConflict}
+                                resolving={resolvingConflict}
+                              />
+                            </div>
+                          )}
                         </div>
 
-                        {/* Edit / Save / Cancel */}
                         <div className="flex items-center gap-1 flex-shrink-0">
                           {isEditing ? (
                             <>

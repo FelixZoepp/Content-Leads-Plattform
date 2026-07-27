@@ -87,6 +87,22 @@
 | Higgsfield (Visuals) | €50/Kunde/Monat (konfigurierbar) | Stopp + Admin-Benachrichtigung |
 | Gesamtkosten | Kein globales Limit | Kosten-Dashboard im Admin |
 
+## Asset Storage Bucket (CL-136)
+
+| Aspekt | Wert |
+|---|---|
+| Bucket-Name | `assets` |
+| Zugriff | Public read, authenticated write |
+| Erstellung | Manuell in Supabase Dashboard → Storage → New bucket → Name: `assets`, Public: ✓ |
+| RLS-Policy (Upload) | `(auth.role() = 'authenticated')` auf INSERT/UPDATE |
+| RLS-Policy (Download) | Public (kein Auth erforderlich für storage_url) |
+| Edge Function | `render-asset` nutzt bereits den Bucket-Namen `'assets'` — keine Änderung nötig |
+| Dateistruktur | `{user_id}/{asset_id}/{filename}` empfohlen |
+| MIME-Typen | image/png, image/jpeg, image/webp, image/svg+xml, text/html |
+| Max. Dateigröße | 50 MB (Supabase-Standard, anpassbar per Policy) |
+
+**Wichtig:** Der Bucket muss einmalig manuell erstellt werden — Supabase MCP unterstützt keine Bucket-Erstellung. Danach läuft alles automatisch über die Edge Function.
+
 ## Perspective API — Bruchstelle
 
 **Status:** Perspective hat keine öffentliche API (Stand 2026-07-27).
