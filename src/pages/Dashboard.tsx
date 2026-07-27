@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { ServiceProgress } from "@/components/customer/ServiceProgress";
 import { KPIReminderBanner } from "@/components/dashboard/KPIReminderBanner";
+import { HealthScoreWidget } from "@/components/dashboard/HealthScoreWidget";
 import {
   BookOpen, Users, MessageSquare, CalendarDays, Video, ArrowRight,
   CheckCircle2, X, Pin, Send, Mail, Phone, TrendingUp, DollarSign,
@@ -238,6 +239,9 @@ export default function Dashboard() {
 
       {/* ── Service Progress (Berater-Fortschritt) ── */}
       <ServiceProgress />
+
+      {/* ── CL-158: Health Score + AI Insights ── */}
+      <HealthScoreWidget />
 
       {/* ── Quick Start Roadmap ── */}
       <div className="glass-panel fade-up" style={{ animationDelay: "60ms" }}>

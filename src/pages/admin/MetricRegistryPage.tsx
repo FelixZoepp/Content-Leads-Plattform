@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Plus, Save, Loader2, X, ChevronUp, ChevronDown,
-  BarChart2, Function, Lock, Edit2
+  BarChart2, Sigma, Lock, Edit2
 } from "lucide-react";
 
 interface MetricDef {
@@ -250,7 +250,7 @@ export default function MetricRegistryPage() {
                       {m.is_derived ? (
                         <div>
                           <span className="flex items-center gap-1 text-[11px] text-[#7FC29B]">
-                            <Function className="w-3 h-3" /> abgeleitet
+                            <Sigma className="w-3 h-3" /> abgeleitet
                           </span>
                           {m.formula && (
                             <span className="text-[10px] font-mono text-[rgba(249,249,249,0.3)] block mt-0.5 max-w-[200px] truncate" title={m.formula}>
