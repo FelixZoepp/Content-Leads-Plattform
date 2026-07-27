@@ -44,6 +44,8 @@ const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdvisorDashboard = lazy(() => import("./pages/AdvisorDashboard"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const AdvisorKPIPage = lazy(() => import("./pages/advisor/AdvisorKPIPage"));
+const DossierPage = lazy(() => import("./pages/advisor/DossierPage"));
+const BrandTokensPage = lazy(() => import("./pages/advisor/BrandTokensPage"));
 const PromptManager = lazy(() => import("./pages/admin/PromptManager"));
 const AuditLogViewer = lazy(() => import("./pages/admin/AuditLogViewer"));
 const AcademyCMS = lazy(() => import("./pages/admin/AcademyCMS"));
@@ -158,6 +160,8 @@ function DashboardRoutes() {
           <Route path="onboarding" element={<OnboardingWizard />} />
           <Route path="advisor" element={<AdvisorDashboard />} />
           <Route path="advisor/kpis" element={<AdvisorKPIPage />} />
+          <Route path="advisor/dossier/:userId" element={<DossierPage />} />
+          <Route path="advisor/brand/:userId" element={<BrandTokensPage />} />
           <Route path="metrics/daily" element={<DailyInputPage />} />
           <Route path="settings" element={<Settings />} />
           <Route path="support" element={<Support />} />
