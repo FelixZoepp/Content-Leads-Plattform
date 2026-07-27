@@ -1,22 +1,22 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Save, Loader2, Sparkles, ExternalLink, Dumbbell } from "lucide-react";
+import { Save, Loader2, Sparkles, ExternalLink, Dumbbell, TrendingUp, Target, Cpu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useKpiEntries } from "@/hooks/useCashflowData";
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Legend
+  Tooltip, ResponsiveContainer, Legend, ReferenceLine,
 } from "recharts";
-import { format, subDays } from "date-fns";
+import { format, subDays, eachDayOfInterval } from "date-fns";
 import { de } from "date-fns/locale";
 
+// ── Legacy hardcoded fields kept for backward-compat form & table ──────────
 const numericFields = [
   { key: "dms_sent", label: "DMs gesendet", group: "Outreach" },
   { key: "dm_replies", label: "DM-Antworten", group: "Outreach" },
@@ -37,10 +37,116 @@ const numericFields = [
 
 type NumericKey = (typeof numericFields)[number]["key"];
 
+// ── Types ───────────────────────────────────────────────────────────────────
+interface MetricDef {
+  id: string;
+  slug: string;
+  label: string;
+  unit: string;
+  type: string;
+  is_derived: boolean;
+  formula: string | null;
+  interval: string;
+  is_mandatory: boolean;
+  order: number;
+}
+
+interface DailyMetricRow {
+  metric_slug: string;
+  date: string;
+  value: number;
+  source: string;
+}
+
+interface MetricTarget {
+  metric_key: string;
+  target_value: number;
+}
+
+// ── Source badge ────────────────────────────────────────────────────────────
+function SourceBadge({ source }: { source: string }) {
+  const cfg: Record<string, { label: string; cls: string }> = {
+    manual:       { label: "manuell",      cls: "bg-[rgba(249,249,249,0.06)] text-[rgba(249,249,249,0.4)]" },
+    nachgetragen: { label: "nachgetragen", cls: "bg-[rgba(233,203,139,0.1)] text-[#E9CB8B]" },
+    "api:heyreach": { label: "HeyReach",   cls: "bg-[rgba(127,194,155,0.1)] text-[#7FC29B]" },
+  };
+  const c = cfg[source] ?? cfg["manual"];
+  return (
+    <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded tracking-wide ${c.cls}`}>
+      {c.label}
+    </span>
+  );
+}
+
+// ── Compliance score indicator ──────────────────────────────────────────────
+function ComplianceIndicator({ score }: { score: number }) {
+  const color = score >= 80 ? "#7FC29B" : score >= 50 ? "#E9CB8B" : "#E87467";
+  return (
+    <div className="flex items-center gap-2">
+      <div
+        className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold border-2"
+        style={{ borderColor: color, color }}
+      >
+        {score}
+      </div>
+      <div>
+        <p className="text-[11px] text-white font-medium">Compliance</p>
+        <p className="text-[10px] text-[rgba(249,249,249,0.4)]">Tage mit Einträgen</p>
+      </div>
+    </div>
+  );
+}
+
+// ── Trend sparkline per metric ──────────────────────────────────────────────
+function TrendLine({
+  metricSlug,
+  dailyData,
+  target,
+}: {
+  metricSlug: string;
+  dailyData: DailyMetricRow[];
+  target?: number;
+}) {
+  const last7 = eachDayOfInterval({ start: subDays(new Date(), 6), end: new Date() });
+  const chartData = last7.map(d => {
+    const dateStr = format(d, "yyyy-MM-dd");
+    const row = dailyData.find(r => r.metric_slug === metricSlug && r.date === dateStr);
+    return {
+      date: format(d, "dd.MM", { locale: de }),
+      value: row ? row.value : null,
+    };
+  });
+
+  const hasData = chartData.some(d => d.value !== null);
+  if (!hasData) {
+    return <span className="text-[10px] text-[rgba(249,249,249,0.2)]">Keine Daten</span>;
+  }
+
+  return (
+    <ResponsiveContainer width="100%" height={60}>
+      <LineChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+        <Line
+          type="monotone"
+          dataKey="value"
+          stroke="#C5A059"
+          strokeWidth={1.5}
+          dot={false}
+          connectNulls
+        />
+        {target !== undefined && (
+          <ReferenceLine y={target} stroke="rgba(127,194,155,0.5)" strokeDasharray="3 3" />
+        )}
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
+
+// ── Main component ──────────────────────────────────────────────────────────
 export default function KPITrackingPage() {
   const { user, tenantId } = useAuth();
   const { toast } = useToast();
   const { entries, loading: entriesLoading, reload } = useKpiEntries(30);
+
   const [saving, setSaving] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<string | null>(null);
@@ -50,8 +156,16 @@ export default function KPITrackingPage() {
   const [trainingDone, setTrainingDone] = useState(false);
   const [trainingEinwand, setTrainingEinwand] = useState("");
 
+  // CL-149: metric_definitions from DB
+  const [metricDefs, setMetricDefs] = useState<MetricDef[]>([]);
+  const [dailyMetrics, setDailyMetrics] = useState<DailyMetricRow[]>([]);
+  const [metricTargets, setMetricTargets] = useState<MetricTarget[]>([]);
+  const [loadingMeta, setLoadingMeta] = useState(true);
+  const [complianceScore, setComplianceScore] = useState<number>(0);
+
   const todayStr = format(new Date(), "yyyy-MM-dd");
 
+  // Load existing kpi_entries for today (legacy form)
   useEffect(() => {
     if (!user) return;
     (supabase as any)
@@ -60,7 +174,7 @@ export default function KPITrackingPage() {
       .eq("user_id", user.id)
       .eq("date", todayStr)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data }: { data: any }) => {
         if (data) {
           const newForm = { ...form };
           for (const f of numericFields) {
@@ -72,6 +186,60 @@ export default function KPITrackingPage() {
         }
       });
   }, [user, todayStr]);
+
+  // CL-149: load metric_definitions, daily_metrics (last 7 days), metric_targets
+  useEffect(() => {
+    if (!user) return;
+    loadMetaData();
+  }, [user]);
+
+  async function loadMetaData() {
+    setLoadingMeta(true);
+    const sevenAgo = format(subDays(new Date(), 6), "yyyy-MM-dd");
+
+    const [defsRes, dailyRes, targetsRes] = await Promise.all([
+      (supabase as any).from("metric_definitions").select("*").order("order"),
+      (supabase as any)
+        .from("daily_metrics")
+        .select("metric_slug, date, value, source")
+        .eq("user_id", user!.id)
+        .gte("date", sevenAgo),
+      tenantId
+        ? (supabase as any)
+            .from("benchmark_targets")
+            .select("metric_key, target_value")
+            .eq("tenant_id", tenantId)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const defs: MetricDef[] = defsRes.data || [];
+    const daily: DailyMetricRow[] = dailyRes.data || [];
+    const targets: MetricTarget[] = (targetsRes.data || []).map((t: any) => ({
+      metric_key: t.metric_key,
+      target_value: t.target_value,
+    }));
+
+    setMetricDefs(defs);
+    setDailyMetrics(daily);
+    setMetricTargets(targets);
+
+    // Compliance: business days last 7 with at least one entry
+    const last7Days = eachDayOfInterval({ start: subDays(new Date(), 6), end: new Date() });
+    const businessDays = last7Days.filter(d => {
+      const dow = d.getDay();
+      return dow !== 0 && dow !== 6;
+    });
+    const daysWithEntry = businessDays.filter(d => {
+      const ds = format(d, "yyyy-MM-dd");
+      return daily.some(r => r.date === ds);
+    });
+    const score = businessDays.length > 0
+      ? Math.round((daysWithEntry.length / businessDays.length) * 100)
+      : 100;
+    setComplianceScore(score);
+
+    setLoadingMeta(false);
+  }
 
   const handleSave = async () => {
     if (!user) return;
@@ -164,7 +332,6 @@ export default function KPITrackingPage() {
 
   const groups = [...new Set(numericFields.map((f) => f.group))];
 
-  // Table columns - subset for readability
   const tableFields = numericFields.filter((f) =>
     ["dms_sent", "dm_replies", "looms_sent", "mails_sent", "setting_calls", "closing_calls", "abschluesse", "umsatz"].includes(f.key)
   );
@@ -172,9 +339,116 @@ export default function KPITrackingPage() {
   return (
     <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 space-y-6">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-bold text-foreground">KPIs & Zahlen</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Tägliche KPI-Erfassung und Analyse</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">KPIs & Zahlen</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Tägliche KPI-Erfassung und Analyse</p>
+          </div>
+          {!loadingMeta && (
+            <ComplianceIndicator score={complianceScore} />
+          )}
+        </div>
       </motion.div>
+
+      {/* CL-149: Metric Dashboards v2 — metric_definitions trend cards */}
+      {metricDefs.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.02 }}
+          className="rounded-xl border border-border/50 bg-card p-5"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp className="h-4 w-4 text-[#E9CB8B]" />
+            <h2 className="text-sm font-semibold text-foreground">Trend — letzte 7 Tage</h2>
+            {loadingMeta && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground ml-1" />}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {metricDefs.filter(m => !m.is_derived).map(m => {
+              const target = metricTargets.find(t => t.metric_key === m.slug)?.target_value;
+              const last7Rows = dailyMetrics.filter(r => r.metric_slug === m.slug);
+              const latest = last7Rows.reduce<DailyMetricRow | null>((acc, r) => {
+                if (!acc || r.date > acc.date) return r;
+                return acc;
+              }, null);
+
+              return (
+                <div
+                  key={m.id}
+                  className="rounded-lg border border-border/40 bg-background/40 p-3 space-y-1"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[12px] font-medium text-foreground">{m.label}</span>
+                    {target !== undefined && (
+                      <span className="flex items-center gap-1 text-[10px] text-[#7FC29B]">
+                        <Target className="h-3 w-3" />
+                        Ziel: {m.unit === "EUR" ? `€${target}` : target}{m.unit && m.unit !== "EUR" ? ` ${m.unit}` : ""}
+                      </span>
+                    )}
+                  </div>
+
+                  <TrendLine
+                    metricSlug={m.slug}
+                    dailyData={dailyMetrics}
+                    target={target}
+                  />
+
+                  {latest && (
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-[11px] text-muted-foreground">
+                        Aktuell:{" "}
+                        <span className="text-foreground font-semibold">
+                          {m.unit === "EUR" ? `€${latest.value}` : latest.value}
+                          {m.unit && m.unit !== "EUR" ? ` ${m.unit}` : ""}
+                        </span>
+                      </span>
+                      <SourceBadge source={latest.source} />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Derived metrics */}
+          {metricDefs.some(m => m.is_derived) && (
+            <div className="mt-4 pt-4 border-t border-border/30">
+              <div className="flex items-center gap-2 mb-3">
+                <Cpu className="h-3.5 w-3.5 text-[#7FC29B]" />
+                <span className="text-[11px] font-semibold text-[#7FC29B] uppercase tracking-wider">
+                  Abgeleitete Metriken (auto-berechnet)
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                {metricDefs.filter(m => m.is_derived).map(m => {
+                  const latest = dailyMetrics
+                    .filter(r => r.metric_slug === m.slug)
+                    .sort((a, b) => b.date.localeCompare(a.date))[0];
+                  return (
+                    <div
+                      key={m.id}
+                      className="rounded-lg border border-[rgba(127,194,155,0.15)] bg-[rgba(127,194,155,0.04)] p-2.5"
+                    >
+                      <p className="text-[11px] text-[rgba(249,249,249,0.5)]">{m.label}</p>
+                      <p className="text-[15px] font-bold text-white mt-0.5">
+                        {latest
+                          ? (m.unit === "EUR" ? `€${latest.value}` : `${latest.value}${m.unit ? ` ${m.unit}` : ""}`)
+                          : "—"}
+                      </p>
+                      {m.formula && (
+                        <p className="text-[9px] font-mono text-[rgba(127,194,155,0.5)] mt-0.5 truncate" title={m.formula}>
+                          {m.formula}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </motion.div>
+      )}
 
       {/* Daily Input Form */}
       <motion.div
@@ -251,7 +525,7 @@ export default function KPITrackingPage() {
         </Button>
       </motion.div>
 
-      {/* Weekly Overview Table */}
+      {/* Weekly Overview Table with source badges */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -273,24 +547,32 @@ export default function KPITrackingPage() {
                     {f.label}
                   </th>
                 ))}
+                <th className="text-right py-2 text-muted-foreground font-medium px-2">Quelle</th>
               </tr>
             </thead>
             <tbody>
-              {last7.map((entry: any) => (
-                <tr key={entry.id} className="border-b border-border/30">
-                  <td className="py-2 text-foreground">
-                    {format(new Date(entry.date), "dd.MM", { locale: de })}
-                  </td>
-                  {tableFields.map((f) => (
-                    <td key={f.key} className="text-right py-2 text-foreground px-2">
-                      {f.key === "umsatz" ? `€${Number(entry[f.key] || 0).toLocaleString("de-DE")}` : (entry[f.key] ?? 0)}
+              {last7.map((entry: any) => {
+                // Find any daily_metric row for this date to show source
+                const dmRow = dailyMetrics.find(r => r.date === entry.date);
+                return (
+                  <tr key={entry.id} className="border-b border-border/30">
+                    <td className="py-2 text-foreground">
+                      {format(new Date(entry.date), "dd.MM", { locale: de })}
                     </td>
-                  ))}
-                </tr>
-              ))}
+                    {tableFields.map((f) => (
+                      <td key={f.key} className="text-right py-2 text-foreground px-2">
+                        {f.key === "umsatz" ? `€${Number(entry[f.key] || 0).toLocaleString("de-DE")}` : (entry[f.key] ?? 0)}
+                      </td>
+                    ))}
+                    <td className="text-right py-2 px-2">
+                      {dmRow ? <SourceBadge source={dmRow.source} /> : null}
+                    </td>
+                  </tr>
+                );
+              })}
               {last7.length === 0 && (
                 <tr>
-                  <td colSpan={tableFields.length + 1} className="py-6 text-center text-muted-foreground">
+                  <td colSpan={tableFields.length + 2} className="py-6 text-center text-muted-foreground">
                     Noch keine Einträge vorhanden.
                   </td>
                 </tr>
