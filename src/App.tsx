@@ -47,6 +47,7 @@ const AdvisorKPIPage = lazy(() => import("./pages/advisor/AdvisorKPIPage"));
 const DossierPage = lazy(() => import("./pages/advisor/DossierPage"));
 const BrandTokensPage = lazy(() => import("./pages/advisor/BrandTokensPage"));
 const FulfillmentPage = lazy(() => import("./pages/advisor/FulfillmentPage"));
+const ReviewQueue = lazy(() => import("./pages/advisor/ReviewQueue"));
 const PromptManager = lazy(() => import("./pages/admin/PromptManager"));
 const AuditLogViewer = lazy(() => import("./pages/admin/AuditLogViewer"));
 const AcademyCMS = lazy(() => import("./pages/admin/AcademyCMS"));
@@ -169,6 +170,7 @@ function DashboardRoutes() {
           <Route path="advisor/dossier/:userId" element={<DossierPage />} />
           <Route path="advisor/brand/:userId" element={<BrandTokensPage />} />
           <Route path="advisor/fulfillment/:userId" element={<FulfillmentPage />} />
+          <Route path="advisor/review" element={<ReviewQueue />} />
           <Route path="metrics/daily" element={<DailyInputPage />} />
           <Route path="settings" element={<Settings />} />
           <Route path="support" element={<Support />} />
